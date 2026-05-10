@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "DOT Affiliates - FEARLESS WEEK 2.0"
+version = "1.0.0"
+id = "artifacts/dot-affiliates"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25538
+
+[services.development]
+run = "pnpm --filter @workspace/dot-affiliates run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/dot-affiliates", "run", "build" ]
+publicDir = "artifacts/dot-affiliates/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25538"
+BASE_PATH = "/"

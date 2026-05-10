@@ -1,22 +1,29 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: DOT Affiliates - FEARLESS WEEK 2.0 API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: affiliate
+    description: Affiliate operations
+  - name: admin
+    description: Admin operations
+  - name: public
+    description: Public endpoints
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +31,414 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: registerAffiliate
+      tags: [auth]
+      summary: Register a new affiliate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AffiliateRegistration"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: loginAffiliate
+      tags: [auth]
+      summary: Login an affiliate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logoutAffiliate
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current session affiliate
+      responses:
+        "200":
+          description: Current affiliate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Affiliate"
+        "401":
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /public/leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [public]
+      summary: Get top 50 affiliates leaderboard
+      responses:
+        "200":
+          description: Leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+  /affiliate/me:
+    get:
+      operationId: getAffiliateMe
+      tags: [affiliate]
+      summary: Get own affiliate profile and stats
+      responses:
+        "200":
+          description: Profile with stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AffiliateDashboard"
+        "401":
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /affiliate/settings:
+    put:
+      operationId: updateAffiliateSettings
+      tags: [affiliate]
+      summary: Update affiliate settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AffiliateSettingsUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Affiliate"
+        "401":
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /affiliate/password:
+    put:
+      operationId: changePassword
+      tags: [affiliate]
+      summary: Change affiliate password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordChangeInput"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: Invalid current password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /track/{code}:
+    get:
+      operationId: trackAffiliateClick
+      tags: [public]
+      summary: Track an affiliate click
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tracked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Invalid code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/affiliates:
+    get:
+      operationId: adminListAffiliates
+      tags: [admin]
+      summary: List all affiliates (admin)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, suspended, pending]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Affiliates list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedAffiliates"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/affiliates/{id}:
+    get:
+      operationId: adminGetAffiliate
+      tags: [admin]
+      summary: Get affiliate details (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Affiliate detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AffiliateDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: adminDeleteAffiliate
+      tags: [admin]
+      summary: Delete affiliate (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/affiliates/{id}/suspend:
+    post:
+      operationId: adminSuspendAffiliate
+      tags: [admin]
+      summary: Suspend affiliate (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Suspended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/affiliates/{id}/unsuspend:
+    post:
+      operationId: adminUnsuspendAffiliate
+      tags: [admin]
+      summary: Unsuspend affiliate (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Unsuspended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/affiliates/{id}/approve:
+    post:
+      operationId: adminApproveAffiliate
+      tags: [admin]
+      summary: Approve affiliate (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/stats:
+    get:
+      operationId: adminGetStats
+      tags: [admin]
+      summary: Get admin overview stats
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/top-performers:
+    get:
+      operationId: adminGetTopPerformers
+      tags: [admin]
+      summary: Get top performing affiliates
+      responses:
+        "200":
+          description: Top performers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AffiliateDetail"
+
+  /admin/activity:
+    get:
+      operationId: adminGetActivity
+      tags: [admin]
+      summary: Get recent activity feed
+      responses:
+        "200":
+          description: Activity feed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityEntry"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +449,350 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+
+    AffiliateRegistration:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - whatsappNumber
+        - primaryPlatform
+        - avgEngagement
+        - hasPromotedBefore
+        - whatsappGroupsReach
+        - ticketsSellEstimate
+        - estimatedReach
+        - willingToPromote
+        - whySelectYou
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        whatsappNumber:
+          type: string
+        phoneNumber:
+          type: ["string", "null"]
+        primaryPlatform:
+          type: string
+          enum: [instagram, tiktok, twitter, snapchat, whatsapp, facebook]
+        avgEngagement:
+          type: string
+        hasPromotedBefore:
+          type: boolean
+        whatsappGroupsReach:
+          type: string
+        ticketsSellEstimate:
+          type: string
+          enum: ["0-50", "50-100", "100+"]
+        estimatedReach:
+          type: ["string", "null"]
+        willingToPromote:
+          type: boolean
+        whySelectYou:
+          type: string
+
+    LoginInput:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required:
+        - affiliate
+        - token
+      properties:
+        affiliate:
+          $ref: "#/components/schemas/Affiliate"
+        token:
+          type: string
+
+    Affiliate:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - affiliateCode
+        - status
+        - primaryPlatform
+        - createdAt
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        whatsappNumber:
+          type: string
+        phoneNumber:
+          type: ["string", "null"]
+        affiliateCode:
+          type: string
+        status:
+          type: string
+          enum: [pending, active, suspended]
+        primaryPlatform:
+          type: string
+        avgEngagement:
+          type: string
+        hasPromotedBefore:
+          type: boolean
+        whatsappGroupsReach:
+          type: string
+        ticketsSellEstimate:
+          type: string
+        estimatedReach:
+          type: ["string", "null"]
+        willingToPromote:
+          type: boolean
+        whySelectYou:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AffiliateDashboard:
+      type: object
+      required:
+        - affiliate
+        - stats
+      properties:
+        affiliate:
+          $ref: "#/components/schemas/Affiliate"
+        stats:
+          $ref: "#/components/schemas/AffiliateStats"
+
+    AffiliateStats:
+      type: object
+      required:
+        - clicks
+        - conversions
+        - rank
+        - affiliateLink
+      properties:
+        clicks:
+          type: integer
+        conversions:
+          type: integer
+        rank:
+          type: ["integer", "null"]
+        affiliateLink:
+          type: string
+
+    LeaderboardEntry:
+      type: object
+      required:
+        - rank
+        - name
+        - primaryPlatform
+        - conversions
+        - clicks
+      properties:
+        rank:
+          type: integer
+        name:
+          type: string
+        primaryPlatform:
+          type: string
+        conversions:
+          type: integer
+        clicks:
+          type: integer
+
+    AffiliateSettingsUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        whatsappNumber:
+          type: string
+        phoneNumber:
+          type: ["string", "null"]
+        primaryPlatform:
+          type: string
+          enum: [instagram, tiktok, twitter, snapchat, whatsapp, facebook]
+
+    PasswordChangeInput:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+
+    PaginatedAffiliates:
+      type: object
+      required:
+        - data
+        - total
+        - page
+        - limit
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AffiliateDetail"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    AffiliateDetail:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - affiliateCode
+        - status
+        - primaryPlatform
+        - clicks
+        - conversions
+        - createdAt
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        whatsappNumber:
+          type: string
+        phoneNumber:
+          type: ["string", "null"]
+        affiliateCode:
+          type: string
+        status:
+          type: string
+          enum: [pending, active, suspended]
+        primaryPlatform:
+          type: string
+        avgEngagement:
+          type: string
+        hasPromotedBefore:
+          type: boolean
+        whatsappGroupsReach:
+          type: string
+        ticketsSellEstimate:
+          type: string
+        estimatedReach:
+          type: ["string", "null"]
+        willingToPromote:
+          type: boolean
+        whySelectYou:
+          type: string
+        clicks:
+          type: integer
+        conversions:
+          type: integer
+        rank:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminStats:
+      type: object
+      required:
+        - totalAffiliates
+        - activeAffiliates
+        - pendingAffiliates
+        - suspendedAffiliates
+        - totalClicks
+        - totalConversions
+        - conversionRate
+      properties:
+        totalAffiliates:
+          type: integer
+        activeAffiliates:
+          type: integer
+        pendingAffiliates:
+          type: integer
+        suspendedAffiliates:
+          type: integer
+        totalClicks:
+          type: integer
+        totalConversions:
+          type: integer
+        conversionRate:
+          type: number
+
+    AdminLoginInput:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AdminAuthResponse:
+      type: object
+      required:
+        - token
+        - role
+      properties:
+        token:
+          type: string
+        role:
+          type: string
+
+    ActivityEntry:
+      type: object
+      required:
+        - id
+        - type
+        - description
+        - createdAt
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        affiliateName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time

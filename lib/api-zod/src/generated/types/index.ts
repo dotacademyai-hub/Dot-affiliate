@@ -28,6 +28,8 @@ export * from "./errorResponse";
 export * from "./healthStatus";
 export * from "./leaderboardEntry";
 export * from "./loginInput";
+export * from "./notification";
+export * from "./notificationsResponse";
 export * from "./paginatedAffiliates";
 export * from "./passwordChangeInput";
 export * from "./successResponse";

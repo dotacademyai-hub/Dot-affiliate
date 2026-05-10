@@ -215,6 +215,30 @@ export interface ActivityEntry {
   createdAt: string;
 }
 
+export interface Notification {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  /** @nullable */
+  affiliateId?: number | null;
+  /** @nullable */
+  affiliateName?: string | null;
+  /** @nullable */
+  affiliateWhatsapp?: string | null;
+  /** @nullable */
+  affiliateEmail?: string | null;
+  /** @nullable */
+  whatsappMessage?: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[];
+  unreadCount: number;
+}
+
 export type AdminListAffiliatesParams = {
   status?: AdminListAffiliatesStatus;
   search?: string;

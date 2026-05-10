@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { db, affiliatesTable, activityTable } from "@workspace/db";
+import { db, affiliatesTable, activityTable, notificationsTable } from "@workspace/db";
 import {
   RegisterAffiliateBody,
   LoginAffiliateBody,
@@ -53,12 +53,33 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     })
     .returning();
 
-  await db.insert(activityTable).values({
-    type: "registration",
-    description: `New affiliate application submitted`,
-    affiliateId: affiliate.id,
-    affiliateName: affiliate.name,
-  });
+  const waReviewLink = affiliate.whatsappNumber
+    ? (() => {
+        const number = affiliate.whatsappNumber.replace(/[^0-9]/g, "");
+        const msg = `👋 Hi ${affiliate.name}, we've received your FEARLESS WEEK 2.0 affiliate application! Our team will review it shortly and get back to you. Stay tuned! — The DOT Team`;
+        return `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
+      })()
+    : null;
+
+  await Promise.all([
+    db.insert(activityTable).values({
+      type: "registration",
+      description: `New affiliate application submitted`,
+      affiliateId: affiliate.id,
+      affiliateName: affiliate.name,
+    }),
+    db.insert(notificationsTable).values({
+      type: "new_application",
+      title: `New application: ${affiliate.name}`,
+      message: `${affiliate.name} (${affiliate.email}) just applied to become an affiliate. Review their profile and approve or reject their application.`,
+      affiliateId: affiliate.id,
+      affiliateName: affiliate.name,
+      affiliateWhatsapp: affiliate.whatsappNumber,
+      affiliateEmail: affiliate.email,
+      whatsappMessage: waReviewLink,
+      isRead: false,
+    }),
+  ]);
 
   const token = signAffiliateToken({ affiliateId: affiliate.id, email: affiliate.email });
   res.status(201).json({ affiliate: safeAffiliate(affiliate), token });

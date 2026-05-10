@@ -390,3 +390,45 @@ export const AdminGetActivityResponseItem = zod.object({
   createdAt: zod.coerce.date(),
 });
 export const AdminGetActivityResponse = zod.array(AdminGetActivityResponseItem);
+
+/**
+ * @summary Get admin notifications
+ */
+export const AdminGetNotificationsResponse = zod.object({
+  notifications: zod.array(
+    zod.object({
+      id: zod.number(),
+      type: zod.string(),
+      title: zod.string(),
+      message: zod.string(),
+      affiliateId: zod.number().nullish(),
+      affiliateName: zod.string().nullish(),
+      affiliateWhatsapp: zod.string().nullish(),
+      affiliateEmail: zod.string().nullish(),
+      whatsappMessage: zod.string().nullish(),
+      isRead: zod.boolean(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+  unreadCount: zod.number(),
+});
+
+/**
+ * @summary Mark all notifications as read
+ */
+export const AdminMarkAllNotificationsReadResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary Mark a single notification as read
+ */
+export const AdminMarkNotificationReadParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminMarkNotificationReadResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});

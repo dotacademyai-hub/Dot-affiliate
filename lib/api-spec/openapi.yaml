@@ -439,6 +439,51 @@ paths:
                 items:
                   $ref: "#/components/schemas/ActivityEntry"
 
+  /admin/notifications:
+    get:
+      operationId: adminGetNotifications
+      tags: [admin]
+      summary: Get admin notifications
+      responses:
+        "200":
+          description: Notifications list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsResponse"
+
+  /admin/notifications/read-all:
+    post:
+      operationId: adminMarkAllNotificationsRead
+      tags: [admin]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/notifications/{id}/read:
+    post:
+      operationId: adminMarkNotificationRead
+      tags: [admin]
+      summary: Mark a single notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -796,3 +841,50 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    Notification:
+      type: object
+      required:
+        - id
+        - type
+        - title
+        - message
+        - isRead
+        - createdAt
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        affiliateId:
+          type: ["integer", "null"]
+        affiliateName:
+          type: ["string", "null"]
+        affiliateWhatsapp:
+          type: ["string", "null"]
+        affiliateEmail:
+          type: ["string", "null"]
+        whatsappMessage:
+          type: ["string", "null"]
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    NotificationsResponse:
+      type: object
+      required:
+        - notifications
+        - unreadCount
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        unreadCount:
+          type: integer

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   useAdminGetStats,
@@ -9,16 +9,19 @@ import {
   useAdminUnsuspendAffiliate,
   useAdminDeleteAffiliate,
   useAdminApproveAffiliate,
+  useAdminGetNotifications,
+  useAdminMarkAllNotificationsRead,
+  useAdminMarkNotificationRead,
   getAdminGetStatsQueryKey,
   getAdminListAffiliatesQueryKey,
   getAdminGetActivityQueryKey,
   getAdminGetTopPerformersQueryKey,
+  getAdminGetNotificationsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
@@ -40,8 +43,9 @@ import {
 } from "@/components/ui/select";
 import {
   Users, TrendingUp, MousePointer, ShoppingCart, Clock, CheckCircle, Ban,
-  Trash2, MessageCircle, Moon, Sun, LogOut, Activity, Trophy, Search,
-  ShieldCheck, BarChart2, UserCheck, UserX, ChevronLeft, ChevronRight
+  Trash2, Moon, Sun, LogOut, Activity, Trophy, Search,
+  ShieldCheck, BarChart2, UserCheck, UserX, ChevronLeft, ChevronRight,
+  Bell, X, CheckCheck, UserPlus, Settings,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import logoPath from "@assets/f45832e5-fd75-4649-94b8-25101588a119_removalai_preview_1778429832966.png";
@@ -63,12 +67,157 @@ function StatusBadge({ status }: { status: string }) {
 
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color?: string }) {
   return (
-    <div className={`p-5 rounded-2xl border border-border bg-card`} data-testid={`admin-stat-${label.toLowerCase().replace(/\s/g, "-")}`}>
+    <div className="p-5 rounded-2xl border border-border bg-card" data-testid={`admin-stat-${label.toLowerCase().replace(/\s/g, "-")}`}>
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${color ?? "bg-primary/10 text-primary"}`}>
         {icon}
       </div>
       <div className="text-2xl font-black mb-1">{value}</div>
       <div className="text-xs text-muted-foreground font-medium">{label}</div>
+    </div>
+  );
+}
+
+function timeAgo(date: string) {
+  const diff = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+function NotificationPanel({
+  onClose,
+}: {
+  onClose: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useAdminGetNotifications({ query: { refetchInterval: 15000 } });
+  const markRead = useAdminMarkNotificationRead();
+  const markAllRead = useAdminMarkAllNotificationsRead();
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: getAdminGetNotificationsQueryKey() });
+  };
+
+  const handleMarkAll = async () => {
+    await markAllRead.mutateAsync();
+    invalidate();
+  };
+
+  const handleMarkOne = async (id: number) => {
+    await markRead.mutateAsync({ id });
+    invalidate();
+  };
+
+  const notifications = data?.notifications ?? [];
+  const unread = data?.unreadCount ?? 0;
+
+  return (
+    <div className="absolute right-0 top-full mt-2 w-[420px] max-h-[540px] flex flex-col rounded-2xl border border-border bg-card shadow-2xl z-50 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center gap-2">
+          <Bell className="w-4 h-4 text-primary" />
+          <span className="font-bold text-sm">Notifications</span>
+          {unread > 0 && (
+            <span className="bg-primary text-primary-foreground text-xs font-black px-2 py-0.5 rounded-full">
+              {unread}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {unread > 0 && (
+            <button
+              onClick={handleMarkAll}
+              className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
+            >
+              <CheckCheck className="w-3.5 h-3.5" /> Mark all read
+            </button>
+          )}
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* List */}
+      <div className="overflow-y-auto flex-1">
+        {isLoading ? (
+          <div className="p-4 space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="py-14 text-center text-muted-foreground">
+            <Bell className="w-10 h-10 mx-auto mb-3 opacity-20" />
+            <p className="text-sm">No notifications yet</p>
+            <p className="text-xs mt-1 opacity-60">New affiliate applications will appear here</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border/50">
+            {notifications.map((n) => (
+              <div
+                key={n.id}
+                className={`px-4 py-3.5 transition-colors ${!n.isRead ? "bg-primary/5" : ""}`}
+              >
+                <div className="flex items-start gap-3">
+                  {/* Icon */}
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    n.type === "new_application"
+                      ? "bg-amber-500/15 text-amber-500"
+                      : n.type === "conversion_milestone"
+                      ? "bg-primary/15 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  }`}>
+                    {n.type === "new_application" ? (
+                      <UserPlus className="w-4 h-4" />
+                    ) : (
+                      <Settings className="w-4 h-4" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className={`text-sm leading-tight ${!n.isRead ? "font-semibold" : "font-medium"}`}>
+                        {n.title}
+                      </p>
+                      {!n.isRead && (
+                        <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1" />
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-xs text-muted-foreground">{timeAgo(n.createdAt)}</span>
+                      {n.whatsappMessage && (
+                        <a
+                          href={n.whatsappMessage}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => !n.isRead && handleMarkOne(n.id)}
+                        >
+                          <button className="flex items-center gap-1 text-xs font-semibold text-[#25D366] hover:text-[#25D366]/80 bg-[#25D366]/10 hover:bg-[#25D366]/20 px-2.5 py-1 rounded-full transition-colors">
+                            <FaWhatsapp className="w-3 h-3" />
+                            {n.type === "new_application" ? "Send receipt" : "Notify via WhatsApp"}
+                          </button>
+                        </a>
+                      )}
+                      {!n.isRead && (
+                        <button
+                          onClick={() => handleMarkOne(n.id)}
+                          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Dismiss
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -81,6 +230,8 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const LIMIT = 15;
 
   const { data: stats, isLoading: statsLoading } = useAdminGetStats();
@@ -92,17 +243,32 @@ export default function AdminDashboard() {
   }, { query: { queryKey: getAdminListAffiliatesQueryKey({ status: statusFilter !== "all" ? statusFilter as "active" | "pending" | "suspended" : undefined, search: search || undefined, page, limit: LIMIT }) } });
   const { data: activity, isLoading: activityLoading } = useAdminGetActivity();
   const { data: topPerformers, isLoading: topLoading } = useAdminGetTopPerformers();
+  const { data: notifData } = useAdminGetNotifications({ query: { refetchInterval: 15000 } });
 
   const suspendMutation = useAdminSuspendAffiliate();
   const unsuspendMutation = useAdminUnsuspendAffiliate();
   const deleteMutation = useAdminDeleteAffiliate();
   const approveMutation = useAdminApproveAffiliate();
 
+  const unreadCount = notifData?.unreadCount ?? 0;
+
+  // Close notification panel when clicking outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    if (notifOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [notifOpen]);
+
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: getAdminGetStatsQueryKey() });
     queryClient.invalidateQueries({ queryKey: getAdminListAffiliatesQueryKey() });
     queryClient.invalidateQueries({ queryKey: getAdminGetActivityQueryKey() });
     queryClient.invalidateQueries({ queryKey: getAdminGetTopPerformersQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getAdminGetNotificationsQueryKey() });
   };
 
   const handleApprove = async (id: number) => {
@@ -185,8 +351,29 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border px-6 py-4">
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border px-6 py-4 flex items-center justify-between">
           <h1 className="font-black text-lg capitalize">{section.replace("-", " ")}</h1>
+
+          {/* Notification Bell */}
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={() => setNotifOpen((v) => !v)}
+              className="relative w-10 h-10 rounded-xl flex items-center justify-center hover:bg-accent transition-colors border border-border"
+              data-testid="button-notifications"
+              aria-label="Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-primary text-primary-foreground text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <NotificationPanel onClose={() => setNotifOpen(false)} />
+            )}
+          </div>
         </div>
 
         <div className="p-6">
@@ -225,6 +412,26 @@ export default function AdminDashboard() {
                   </div>
                 ))}
               </div>
+
+              {/* Unread notifications quick view on dashboard */}
+              {unreadCount > 0 && (
+                <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+                  <h2 className="font-bold mb-3 flex items-center gap-2 text-primary">
+                    <Bell className="w-4 h-4" /> {unreadCount} Unread {unreadCount === 1 ? "Notification" : "Notifications"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    You have pending items that need your attention — new applications and status updates awaiting action.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setNotifOpen(true)}
+                    className="border-primary/30 text-primary hover:bg-primary/10"
+                  >
+                    <Bell className="w-3.5 h-3.5 mr-2" /> View Notifications
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -285,7 +492,7 @@ export default function AdminDashboard() {
                             No affiliates found
                           </td>
                         </tr>
-                      ) : affiliatesData?.data.map((a, i) => (
+                      ) : affiliatesData?.data.map((a) => (
                         <tr key={a.id} className="border-b border-border/50 hover:bg-accent/5 transition-colors" data-testid={`affiliate-row-${a.id}`}>
                           <td className="px-4 py-3 text-muted-foreground">{a.rank ? `#${a.rank}` : "—"}</td>
                           <td className="px-4 py-3 font-semibold">{a.name}</td>

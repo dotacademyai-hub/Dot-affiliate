@@ -10,6 +10,7 @@ import Dashboard from "@/pages/Dashboard";
 import Settings from "@/pages/Settings";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import MockPlatform from "@/pages/MockPlatform";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/admin/dashboard">
         {() => <ProtectedRoute admin component={AdminDashboard} />}
       </Route>
+      <Route path="/demo" component={MockPlatform} />
       <Route component={NotFound} />
     </Switch>
   );

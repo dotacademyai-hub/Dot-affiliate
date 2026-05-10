@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Moon, Sun, ArrowLeft, LogOut, Loader2, User, Lock } from "lucide-react";
+import { Moon, Sun, ArrowLeft, LogOut, Loader2, User, Lock, Eye, EyeOff } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import logoPath from "@assets/f45832e5-fd75-4649-94b8-25101588a119_removalai_preview_1778429832966.png";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +41,41 @@ const PLATFORMS = [
   { value: "facebook", label: "Facebook" },
 ];
 
+function PasswordInput({ id, label, registration, error, testId }: {
+  id: string;
+  label: string;
+  registration: object;
+  error?: string;
+  testId?: string;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <div className="relative mt-1">
+        <Input
+          id={id}
+          type={show ? "text" : "password"}
+          className="pr-10"
+          autoComplete="new-password"
+          data-testid={testId}
+          {...registration}
+        />
+        <button
+          type="button"
+          onClick={() => setShow((s) => !s)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          tabIndex={-1}
+          aria-label={show ? "Hide password" : "Show password"}
+        >
+          {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+      </div>
+      {error && <p className="text-destructive text-xs mt-1">{error}</p>}
+    </div>
+  );
+}
+
 export default function Settings() {
   const [, setLocation] = useLocation();
   const { theme, setTheme } = useTheme();
@@ -69,7 +104,7 @@ export default function Settings() {
 
   const onSaveSettings = settingsForm.handleSubmit(async (data) => {
     try {
-      await updateMutation.mutateAsync({ data: { ...data, primaryPlatform: data.primaryPlatform } });
+      await updateMutation.mutateAsync({ data });
       queryClient.invalidateQueries({ queryKey: getGetAffiliateMeQueryKey() });
       toast({ title: "Settings saved", description: "Your profile has been updated." });
     } catch {
@@ -95,7 +130,6 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Navbar */}
       <nav className="border-b border-border bg-background/95 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -105,20 +139,13 @@ export default function Settings() {
             <img src={logoPath} alt="DOT" className="w-7 h-7 object-contain dark:brightness-100 brightness-50" />
             <span className="font-black">Settings</span>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-accent transition-colors"
-              data-testid="button-theme-toggle"
-            >
-              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-          </div>
+          <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-accent transition-colors" data-testid="button-theme-toggle">
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
         </div>
       </nav>
 
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-        {/* Profile Settings */}
         <div className="rounded-2xl border border-border bg-card p-6" data-testid="card-profile-settings">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
@@ -130,9 +157,7 @@ export default function Settings() {
             </div>
           </div>
           {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
-            </div>
+            <div className="space-y-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
           ) : (
             <form onSubmit={onSaveSettings} className="space-y-4">
               <div>
@@ -151,10 +176,7 @@ export default function Settings() {
               </div>
               <div>
                 <Label htmlFor="s-platform">Primary Platform</Label>
-                <Select
-                  value={settingsForm.watch("primaryPlatform")}
-                  onValueChange={(v) => settingsForm.setValue("primaryPlatform", v as SettingsForm["primaryPlatform"])}
-                >
+                <Select value={settingsForm.watch("primaryPlatform")} onValueChange={(v) => settingsForm.setValue("primaryPlatform", v as SettingsForm["primaryPlatform"])}>
                   <SelectTrigger className="mt-1" data-testid="select-platform">
                     <SelectValue placeholder="Select platform" />
                   </SelectTrigger>
@@ -164,13 +186,12 @@ export default function Settings() {
                 </Select>
               </div>
               <Button type="submit" disabled={updateMutation.isPending} className="w-full font-bold" data-testid="button-save-profile">
-                {updateMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : "Save Changes"}
+                {updateMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : "Save Changes"}
               </Button>
             </form>
           )}
         </div>
 
-        {/* Change Password */}
         <div className="rounded-2xl border border-border bg-card p-6" data-testid="card-password-settings">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
@@ -182,28 +203,15 @@ export default function Settings() {
             </div>
           </div>
           <form onSubmit={onChangePassword} className="space-y-4">
-            <div>
-              <Label htmlFor="p-current">Current Password</Label>
-              <Input id="p-current" type="password" {...passwordForm.register("currentPassword")} className="mt-1" data-testid="input-current-password" />
-              {passwordForm.formState.errors.currentPassword && <p className="text-destructive text-xs mt-1">{passwordForm.formState.errors.currentPassword.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="p-new">New Password</Label>
-              <Input id="p-new" type="password" {...passwordForm.register("newPassword")} className="mt-1" data-testid="input-new-password" />
-              {passwordForm.formState.errors.newPassword && <p className="text-destructive text-xs mt-1">{passwordForm.formState.errors.newPassword.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="p-confirm">Confirm New Password</Label>
-              <Input id="p-confirm" type="password" {...passwordForm.register("confirmPassword")} className="mt-1" data-testid="input-confirm-password" />
-              {passwordForm.formState.errors.confirmPassword && <p className="text-destructive text-xs mt-1">{passwordForm.formState.errors.confirmPassword.message}</p>}
-            </div>
+            <PasswordInput id="p-current" label="Current Password" registration={passwordForm.register("currentPassword")} error={passwordForm.formState.errors.currentPassword?.message} testId="input-current-password" />
+            <PasswordInput id="p-new" label="New Password" registration={passwordForm.register("newPassword")} error={passwordForm.formState.errors.newPassword?.message} testId="input-new-password" />
+            <PasswordInput id="p-confirm" label="Confirm New Password" registration={passwordForm.register("confirmPassword")} error={passwordForm.formState.errors.confirmPassword?.message} testId="input-confirm-password" />
             <Button type="submit" variant="outline" disabled={passwordMutation.isPending} className="w-full font-bold" data-testid="button-change-password">
-              {passwordMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Updating...</> : "Update Password"}
+              {passwordMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Updating...</> : "Update Password"}
             </Button>
           </form>
         </div>
 
-        {/* Logout */}
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6">
           <h2 className="font-bold mb-1 text-destructive">Sign Out</h2>
           <p className="text-sm text-muted-foreground mb-4">You'll need to log in again to access your dashboard.</p>

@@ -39,11 +39,13 @@ app.use((req, res, next) => {
 
 // Debug: catch-all route to see what paths are received
 app.all("*", (req, res, next) => {
-  console.log(`[CATCHALL] ${req.method} ${req.path} - headers: ${JSON.stringify(req.headers['x-vercel-rewritten-path'] || 'none')}`);
+  console.log(`[CATCHALL] ${req.method} ${req.path}`);
   if (req.path === '/' || req.path === '/api') {
-    return res.json({ debug: true, method: req.method, path: req.path, url: req.url, originalUrl: req.originalUrl });
+    res.json({ debug: true, method: req.method, path: req.path, url: req.url, originalUrl: req.originalUrl });
+    return;
   }
   next();
+  return;
 });
 
 app.use("/api", router);

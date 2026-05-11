@@ -1,6 +1,6 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { eq, desc, like, or, and, sql, count, gt, lt } from "drizzle-orm";
-import { db, affiliatesTable, activityTable, notificationsTable } from "@workspace/db";
+import { db, affiliatesTable, activityTable, notificationsTable } from "@workspace/db/src/index.js";
 import {
   AdminListAffiliatesQueryParams,
   AdminGetAffiliateParams,
@@ -8,7 +8,7 @@ import {
   AdminSuspendAffiliateParams,
   AdminUnsuspendAffiliateParams,
   AdminApproveAffiliateParams,
-} from "@workspace/api-zod";
+} from "@workspace/api-zod/src/index.js";
 import { requireAdmin, signAdminToken } from "../middlewares/auth.js";
 import { sendEmail } from "../lib/email.js";
 

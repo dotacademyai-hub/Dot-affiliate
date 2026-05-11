@@ -1,11 +1,11 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { db, affiliatesTable, activityTable, notificationsTable } from "@workspace/db";
+import { db, affiliatesTable, activityTable, notificationsTable } from "@workspace/db/src/index.js";
 import {
   RegisterAffiliateBody,
   LoginAffiliateBody,
-} from "@workspace/api-zod";
+} from "@workspace/api-zod/src/index.js";
 import {
   signAffiliateToken,
   requireAffiliate,

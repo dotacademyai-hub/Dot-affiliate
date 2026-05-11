@@ -1,11 +1,11 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { eq, desc, sql } from "drizzle-orm";
-import { db, affiliatesTable, clicksTable } from "@workspace/db";
+import { db, affiliatesTable, clicksTable } from "@workspace/db/src/index.js";
 import {
   UpdateAffiliateSettingsBody,
   ChangePasswordBody,
-} from "@workspace/api-zod";
+} from "@workspace/api-zod/src/index.js";
 import { requireAffiliate } from "../middlewares/auth.js";
 
 const router = Router();

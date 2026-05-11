@@ -1,5 +1,5 @@
-import { Router, type IRouter } from "express";
-import { HealthCheckResponse } from "@workspace/api-zod";
+import { Router } from "express";
+import { HealthCheckResponse } from "@workspace/api-zod/src/index.js";
 
 const router = Router();
 

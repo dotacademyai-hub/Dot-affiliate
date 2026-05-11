@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "outputDirectory": "artifacts/dot-affiliates/dist/public",
   "rewrites": [
     {
       "source": "/api/(.*)",

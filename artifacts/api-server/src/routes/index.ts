@@ -5,7 +5,7 @@ import affiliateRouter from "./affiliate.js";
 import publicRouter from "./public.js";
 import adminRouter from "./admin.js";
 
-const router: IRouter = Router();
+const router = Router();
 
 router.use(healthRouter);
 router.use(authRouter);

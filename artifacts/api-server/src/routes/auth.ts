@@ -14,7 +14,7 @@ import {
 import { generateAffiliateCode } from "../lib/affiliateCode.js";
 import { sendEmail, notifyAdmins } from "../lib/email.js";
 
-const router: IRouter = Router();
+const router = Router();
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "fearless2025admin";

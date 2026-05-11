@@ -8,7 +8,7 @@ import {
 } from "@workspace/api-zod";
 import { requireAffiliate } from "../middlewares/auth.js";
 
-const router: IRouter = Router();
+const router = Router();
 
 function safeAffiliate(a: typeof affiliatesTable.$inferSelect) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -4,7 +4,7 @@ import { db, affiliatesTable, clicksTable, activityTable } from "@workspace/db";
 import { TrackAffiliateClickParams } from "@workspace/api-zod";
 import { nanoid } from "nanoid";
 
-const router: IRouter = Router();
+const router = Router();
 
 const SELLENDA_URL = "https://sellenda.com.ng/buy/3561B2";
 

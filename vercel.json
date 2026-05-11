@@ -1,9 +1,29 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "api/index.ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "artifacts/dot-affiliates/dist" }
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.ts"
+      "destination": "api/index.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "artifacts/dot-affiliates/dist/$1",
+      "check": true
+    },
+    {
+      "source": "/(.*)",
+      "destination": "artifacts/dot-affiliates/dist/index.html"
     }
   ]
 }

@@ -10,8 +10,13 @@
     "allowImportingTsExtensions": true,
     "moduleResolution": "bundler",
     "types": ["node", "vite/client"],
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@workspace/db": ["../../lib/db/src/index.ts"],
+      "@workspace/db/*": ["../../lib/db/*"],
+      "@workspace/api-zod": ["../../lib/api-zod/src/index.ts"],
+      "@workspace/api-zod/*": ["../../lib/api-zod/*"]
     }
   },
   "references": [

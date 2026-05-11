@@ -633,12 +633,12 @@ export default function AdminDashboard() {
                   <Input
                     placeholder="Search by name or email..."
                     value={search}
-                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setSearch(e.target.value); setPage(1); }}
                     className="pl-9 w-full"
                     data-testid="input-search-affiliates"
                   />
                 </div>
-                <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+                <Select value={statusFilter} onValueChange={(v: string) => { setStatusFilter(v); setPage(1); }}>
                   <SelectTrigger className="w-full sm:w-40" data-testid="select-status-filter">
                     <SelectValue />
                   </SelectTrigger>

@@ -198,7 +198,7 @@ export default function Settings() {
               </div>
               <div>
                 <Label htmlFor="s-platform">Primary Platform</Label>
-                <Select value={settingsForm.watch("primaryPlatform")} onValueChange={(v) => settingsForm.setValue("primaryPlatform", v as SettingsForm["primaryPlatform"])}>
+                <Select value={settingsForm.watch("primaryPlatform")} onValueChange={(v: string) => settingsForm.setValue("primaryPlatform", v as SettingsForm["primaryPlatform"])}>
                   <SelectTrigger className="mt-1" data-testid="select-platform">
                     <SelectValue placeholder="Select platform" />
                   </SelectTrigger>

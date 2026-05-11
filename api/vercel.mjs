@@ -63420,12 +63420,16 @@ app.get("/api/test", (req, res) => {
 var app_default = app;
 
 // src/vercel.ts
-dotenv2.config({ path: join2(process.cwd(), "../../.env") });
-dotenv2.config({ path: join2(process.cwd(), ".env") });
-dotenv2.config();
+// Note: Environment variables are set in Vercel dashboard, not .env files
 function handler(req, res) {
-  console.log(`[Vercel] ${req.method} ${req.url}`);
-  return app_default(req, res);
+  try {
+    console.log(`[Vercel] ${req.method} ${req.url}`);
+    return app_default(req, res);
+  } catch (err) {
+    console.error('[Vercel] Error:', err);
+    res.statusCode = 500;
+    res.end(JSON.stringify({ error: 'Server error' }));
+  }
 }
 export {
   handler as default

@@ -1,0 +1,2 @@
+Build timestamp: 2026-05-11-21-26
+Nodemailer bundled: yes

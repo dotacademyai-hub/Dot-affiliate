@@ -10,9 +10,9 @@ import {
   signAffiliateToken,
   requireAffiliate,
   signAdminToken,
-} from "../middlewares/auth";
-import { generateAffiliateCode } from "../lib/affiliateCode";
-import { sendEmail, notifyAdmins } from "../lib/email";
+} from "../middlewares/auth.js";
+import { generateAffiliateCode } from "../lib/affiliateCode.js";
+import { sendEmail, notifyAdmins } from "../lib/email.js";
 
 const router: IRouter = Router();
 

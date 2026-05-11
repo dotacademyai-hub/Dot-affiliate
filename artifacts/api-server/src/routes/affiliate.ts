@@ -6,7 +6,7 @@ import {
   UpdateAffiliateSettingsBody,
   ChangePasswordBody,
 } from "@workspace/api-zod";
-import { requireAffiliate } from "../middlewares/auth";
+import { requireAffiliate } from "../middlewares/auth.js";
 
 const router: IRouter = Router();
 

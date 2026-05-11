@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { logger } from "./logger";
+import { logger } from "./logger.js";
 
 const OFFICIAL_EMAIL = "dotacademy.ai@gmail.com";
 

@@ -9,8 +9,8 @@ import {
   AdminUnsuspendAffiliateParams,
   AdminApproveAffiliateParams,
 } from "@workspace/api-zod";
-import { requireAdmin, signAdminToken } from "../middlewares/auth";
-import { sendEmail } from "../lib/email";
+import { requireAdmin, signAdminToken } from "../middlewares/auth.js";
+import { sendEmail } from "../lib/email.js";
 
 const router: IRouter = Router();
 

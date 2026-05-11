@@ -21,6 +21,7 @@ export const registerAffiliateBodyPasswordMin = 8;
 
 export const RegisterAffiliateBody = zod.object({
   name: zod.string(),
+  username: zod.string(),
   email: zod.string().email(),
   password: zod.string().min(registerAffiliateBodyPasswordMin),
   whatsappNumber: zod.string(),
@@ -46,30 +47,34 @@ export const RegisterAffiliateBody = zod.object({
  * @summary Login an affiliate
  */
 export const LoginAffiliateBody = zod.object({
-  email: zod.string().email(),
+  identifier: zod.string().describe("Email or Username"),
   password: zod.string(),
 });
 
 export const LoginAffiliateResponse = zod.object({
-  affiliate: zod.object({
-    id: zod.number(),
-    name: zod.string(),
-    email: zod.string(),
-    whatsappNumber: zod.string().optional(),
-    phoneNumber: zod.string().nullish(),
-    affiliateCode: zod.string(),
-    status: zod.enum(["pending", "active", "suspended"]),
-    primaryPlatform: zod.string(),
-    avgEngagement: zod.string().optional(),
-    hasPromotedBefore: zod.boolean().optional(),
-    whatsappGroupsReach: zod.string().optional(),
-    ticketsSellEstimate: zod.string().optional(),
-    estimatedReach: zod.string().nullish(),
-    willingToPromote: zod.boolean().optional(),
-    whySelectYou: zod.string().optional(),
-    createdAt: zod.coerce.date(),
-  }),
+  affiliate: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      username: zod.string(),
+      email: zod.string(),
+      whatsappNumber: zod.string().optional(),
+      phoneNumber: zod.string().nullish(),
+      affiliateCode: zod.string(),
+      status: zod.enum(["pending", "active", "suspended"]),
+      primaryPlatform: zod.string(),
+      avgEngagement: zod.string().optional(),
+      hasPromotedBefore: zod.boolean().optional(),
+      whatsappGroupsReach: zod.string().optional(),
+      ticketsSellEstimate: zod.string().optional(),
+      estimatedReach: zod.string().nullish(),
+      willingToPromote: zod.boolean().optional(),
+      whySelectYou: zod.string().optional(),
+      createdAt: zod.coerce.date(),
+    })
+    .optional(),
   token: zod.string(),
+  role: zod.enum(["admin", "affiliate"]).optional(),
 });
 
 /**
@@ -86,6 +91,7 @@ export const LogoutAffiliateResponse = zod.object({
 export const GetMeResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
+  username: zod.string(),
   email: zod.string(),
   whatsappNumber: zod.string().optional(),
   phoneNumber: zod.string().nullish(),
@@ -107,7 +113,7 @@ export const GetMeResponse = zod.object({
  */
 export const GetLeaderboardResponseItem = zod.object({
   rank: zod.number(),
-  name: zod.string(),
+  username: zod.string(),
   primaryPlatform: zod.string(),
   conversions: zod.number(),
   clicks: zod.number(),
@@ -121,6 +127,7 @@ export const GetAffiliateMeResponse = zod.object({
   affiliate: zod.object({
     id: zod.number(),
     name: zod.string(),
+    username: zod.string(),
     email: zod.string(),
     whatsappNumber: zod.string().optional(),
     phoneNumber: zod.string().nullish(),
@@ -149,6 +156,7 @@ export const GetAffiliateMeResponse = zod.object({
  */
 export const UpdateAffiliateSettingsBody = zod.object({
   name: zod.string().optional(),
+  username: zod.string().optional(),
   whatsappNumber: zod.string().optional(),
   phoneNumber: zod.string().nullish(),
   primaryPlatform: zod
@@ -166,6 +174,7 @@ export const UpdateAffiliateSettingsBody = zod.object({
 export const UpdateAffiliateSettingsResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
+  username: zod.string(),
   email: zod.string(),
   whatsappNumber: zod.string().optional(),
   phoneNumber: zod.string().nullish(),
@@ -224,6 +233,7 @@ export const AdminListAffiliatesResponse = zod.object({
     zod.object({
       id: zod.number(),
       name: zod.string(),
+      username: zod.string(),
       email: zod.string(),
       whatsappNumber: zod.string().optional(),
       phoneNumber: zod.string().nullish(),
@@ -258,6 +268,7 @@ export const AdminGetAffiliateParams = zod.object({
 export const AdminGetAffiliateResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
+  username: zod.string(),
   email: zod.string(),
   whatsappNumber: zod.string().optional(),
   phoneNumber: zod.string().nullish(),
@@ -339,24 +350,12 @@ export const AdminGetStatsResponse = zod.object({
 });
 
 /**
- * @summary Admin login
- */
-export const AdminLoginBody = zod.object({
-  username: zod.string(),
-  password: zod.string(),
-});
-
-export const AdminLoginResponse = zod.object({
-  token: zod.string(),
-  role: zod.string(),
-});
-
-/**
  * @summary Get top performing affiliates
  */
 export const AdminGetTopPerformersResponseItem = zod.object({
   id: zod.number(),
   name: zod.string(),
+  username: zod.string(),
   email: zod.string(),
   whatsappNumber: zod.string().optional(),
   phoneNumber: zod.string().nullish(),

@@ -8,7 +8,6 @@ import Home from "@/pages/Home";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import Settings from "@/pages/Settings";
-import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import MockPlatform from "@/pages/MockPlatform";
 
@@ -19,7 +18,7 @@ export function ProtectedRoute({ component: Component, admin = false, ...rest }:
   const token = localStorage.getItem(admin ? "adminToken" : "affiliateToken");
 
   if (!token) {
-    setLocation(admin ? "/admin" : "/auth");
+    setLocation("/auth");
     return null;
   }
 
@@ -37,8 +36,7 @@ function Router() {
       <Route path="/settings">
         {() => <ProtectedRoute component={Settings} />}
       </Route>
-      <Route path="/admin" component={AdminLogin} />
-      <Route path="/admin/dashboard">
+      <Route path="/fearless-control-gate-2025">
         {() => <ProtectedRoute admin component={AdminDashboard} />}
       </Route>
       <Route path="/demo" component={MockPlatform} />
@@ -51,12 +49,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL?.replace(/\/$/, "") || ""}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
+        <div className="min-h-screen">
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL?.replace(/\/$/, "") || ""}>
+              <Router />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </div>
       </ThemeProvider>
     </QueryClientProvider>
   );

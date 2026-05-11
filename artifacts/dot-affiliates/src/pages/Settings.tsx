@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const settingsSchema = z.object({
   name: z.string().min(2, "Name too short"),
+  username: z.string().min(3, "Username too short").regex(/^[a-zA-Z0-9_]+$/, "Only letters, numbers and underscores allowed"),
   whatsappNumber: z.string().min(7, "Required"),
   phoneNumber: z.string().optional(),
   primaryPlatform: z.enum(["instagram", "tiktok", "twitter", "snapchat", "whatsapp", "facebook"]).optional(),
@@ -67,6 +68,7 @@ function PasswordInput({ id, label, registration, error, testId }: {
           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
           tabIndex={-1}
           aria-label={show ? "Hide password" : "Show password"}
+          title={show ? "Hide password" : "Show password"}
         >
           {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         </button>
@@ -95,6 +97,7 @@ export default function Settings() {
     if (affiliate) {
       settingsForm.reset({
         name: affiliate.name,
+        username: affiliate.username,
         whatsappNumber: affiliate.whatsappNumber ?? "",
         phoneNumber: affiliate.phoneNumber ?? "",
         primaryPlatform: affiliate.primaryPlatform as SettingsForm["primaryPlatform"],
@@ -133,13 +136,27 @@ export default function Settings() {
       <nav className="border-b border-border bg-background/95 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => setLocation("/dashboard")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-accent transition-colors" data-testid="button-back">
+            <button 
+              type="button"
+              onClick={() => setLocation("/dashboard")} 
+              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-accent transition-colors" 
+              data-testid="button-back"
+              aria-label="Back to dashboard"
+              title="Back to dashboard"
+            >
               <ArrowLeft className="w-4 h-4" />
             </button>
             <img src={logoPath} alt="DOT" className="w-7 h-7 object-contain dark:brightness-100 brightness-50" />
             <span className="font-black">Settings</span>
           </div>
-          <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-accent transition-colors" data-testid="button-theme-toggle">
+          <button 
+            type="button"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")} 
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-accent transition-colors" 
+            data-testid="button-theme-toggle"
+            aria-label="Toggle theme"
+            title="Toggle theme"
+          >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         </div>
@@ -164,6 +181,11 @@ export default function Settings() {
                 <Label htmlFor="s-name">Full Name</Label>
                 <Input id="s-name" {...settingsForm.register("name")} className="mt-1" data-testid="input-name" />
                 {settingsForm.formState.errors.name && <p className="text-destructive text-xs mt-1">{settingsForm.formState.errors.name.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="s-username">Username</Label>
+                <Input id="s-username" {...settingsForm.register("username")} className="mt-1" data-testid="input-username" />
+                {settingsForm.formState.errors.username && <p className="text-destructive text-xs mt-1">{settingsForm.formState.errors.username.message}</p>}
               </div>
               <div>
                 <Label htmlFor="s-whatsapp">WhatsApp Number</Label>

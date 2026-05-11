@@ -342,11 +342,10 @@ export async function customFetch<T = unknown>(
       const url = resolveUrl(input);
       if (url.includes("/api/admin")) {
         localStorage.removeItem("adminToken");
-        window.location.href = "/admin";
       } else {
         localStorage.removeItem("affiliateToken");
-        window.location.href = "/auth";
       }
+      window.location.href = "/auth";
     }
     const errorData = await parseErrorBody(response, method);
     throw new ApiError(response, errorData, requestInfo);

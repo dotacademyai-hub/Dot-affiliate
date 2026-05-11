@@ -28,9 +28,8 @@ Full-stack affiliate marketing platform for FEARLESS WEEK 2.0 by DOT. Influencer
 - `artifacts/dot-affiliates/` — React frontend (Vite)
   - `src/pages/Home.tsx` — landing page with hero, how-it-works, leaderboard, support
   - `src/pages/Auth.tsx` — login + 4-step signup form
-  - `src/pages/Dashboard.tsx` — affiliate dashboard (link, stats, rank)
+  - `src/pages/Dashboard.tsx` — affiliate metrics & link
   - `src/pages/Settings.tsx` — profile & password settings
-  - `src/pages/admin/AdminLogin.tsx` — admin login gate
   - `src/pages/admin/AdminDashboard.tsx` — full admin control panel
   - `src/index.css` — theme variables (dark/light HSL + animated green mesh)
 - `artifacts/api-server/` — Express API

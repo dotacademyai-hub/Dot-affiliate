@@ -34,6 +34,7 @@ export const ticketEstimateEnum = pgEnum("ticket_estimate", [
 export const affiliatesTable = pgTable("affiliates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   whatsappNumber: text("whatsapp_number").notNull(),

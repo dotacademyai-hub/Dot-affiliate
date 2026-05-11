@@ -384,31 +384,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /admin/login:
-    post:
-      operationId: adminLogin
-      tags: [admin]
-      summary: Admin login
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AdminLoginInput"
-      responses:
-        "200":
-          description: Logged in
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AdminAuthResponse"
-        "401":
-          description: Invalid credentials
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
   /admin/top-performers:
     get:
       operationId: adminGetTopPerformers
@@ -516,6 +491,7 @@ components:
       type: object
       required:
         - name
+        - username
         - email
         - password
         - whatsappNumber
@@ -529,6 +505,8 @@ components:
         - whySelectYou
       properties:
         name:
+          type: string
+        username:
           type: string
         email:
           type: string
@@ -562,31 +540,34 @@ components:
     LoginInput:
       type: object
       required:
-        - email
+        - identifier
         - password
       properties:
-        email:
+        identifier:
           type: string
-          format: email
+          description: Email or Username
         password:
           type: string
 
     AuthResponse:
       type: object
       required:
-        - affiliate
         - token
       properties:
         affiliate:
           $ref: "#/components/schemas/Affiliate"
         token:
           type: string
+        role:
+          type: string
+          enum: [admin, affiliate]
 
     Affiliate:
       type: object
       required:
         - id
         - name
+        - username
         - email
         - affiliateCode
         - status
@@ -596,6 +577,8 @@ components:
         id:
           type: integer
         name:
+          type: string
+        username:
           type: string
         email:
           type: string
@@ -660,14 +643,14 @@ components:
       type: object
       required:
         - rank
-        - name
+        - username
         - primaryPlatform
         - conversions
         - clicks
       properties:
         rank:
           type: integer
-        name:
+        username:
           type: string
         primaryPlatform:
           type: string
@@ -680,6 +663,8 @@ components:
       type: object
       properties:
         name:
+          type: string
+        username:
           type: string
         whatsappNumber:
           type: string
@@ -725,6 +710,7 @@ components:
       required:
         - id
         - name
+        - username
         - email
         - affiliateCode
         - status
@@ -736,6 +722,8 @@ components:
         id:
           type: integer
         name:
+          type: string
+        username:
           type: string
         email:
           type: string
@@ -799,28 +787,6 @@ components:
           type: integer
         conversionRate:
           type: number
-
-    AdminLoginInput:
-      type: object
-      required:
-        - username
-        - password
-      properties:
-        username:
-          type: string
-        password:
-          type: string
-
-    AdminAuthResponse:
-      type: object
-      required:
-        - token
-        - role
-      properties:
-        token:
-          type: string
-        role:
-          type: string
 
     ActivityEntry:
       type: object

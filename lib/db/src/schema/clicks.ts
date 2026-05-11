@@ -9,6 +9,7 @@ export const clicksTable = pgTable("clicks", {
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
   isPaid: boolean("is_paid").notNull().default(false),
+  token: text("token"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

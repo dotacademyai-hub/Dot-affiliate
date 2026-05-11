@@ -6,8 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Affiliate } from "./affiliate";
+import type { AuthResponseRole } from "./authResponseRole";
 
 export interface AuthResponse {
-  affiliate: Affiliate;
+  affiliate?: Affiliate;
   token: string;
+  role?: AuthResponseRole;
 }

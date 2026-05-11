@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, like, or, and, sql, count } from "drizzle-orm";
+import { eq, desc, like, or, and, sql, count, gt, lt } from "drizzle-orm";
 import { db, affiliatesTable, activityTable, notificationsTable } from "@workspace/db";
 import {
   AdminListAffiliatesQueryParams,
@@ -8,9 +8,9 @@ import {
   AdminSuspendAffiliateParams,
   AdminUnsuspendAffiliateParams,
   AdminApproveAffiliateParams,
-  AdminLoginBody,
 } from "@workspace/api-zod";
 import { requireAdmin, signAdminToken } from "../middlewares/auth";
+import { sendEmail } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -44,30 +44,52 @@ function buildReactivationWhatsApp(name: string, code: string, whatsapp: string)
   return `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
 }
 
-/* ─── Admin Login ────────────────────────────────────────────── */
+/* ─── Manual Conversion Test ────────────────────────────────── */
 
-router.post("/admin/login", async (req, res): Promise<void> => {
-  const parsed = AdminLoginBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+router.post("/admin/test/conversion", requireAdmin, async (req, res): Promise<void> => {
+  const { affiliateId } = req.body;
+
+  if (!affiliateId) {
+    res.status(400).json({ error: "Affiliate ID required" });
     return;
   }
 
-  if (
-    parsed.data.username !== ADMIN_USERNAME ||
-    parsed.data.password !== ADMIN_PASSWORD
-  ) {
-    res.status(401).json({ error: "Invalid admin credentials" });
+  const [affiliate] = await db
+    .select()
+    .from(affiliatesTable)
+    .where(eq(affiliatesTable.id, Number(affiliateId)))
+    .limit(1);
+
+  if (!affiliate) {
+    res.status(404).json({ error: "Affiliate not found" });
     return;
   }
 
-  const token = signAdminToken({ role: "admin", username: parsed.data.username });
-  res.json({ token, role: "admin" });
+  // Increment conversions
+  await db
+    .update(affiliatesTable)
+    .set({ conversions: sql`${affiliatesTable.conversions} + 1` })
+    .where(eq(affiliatesTable.id, affiliate.id));
+
+  // Log activity
+  await db.insert(activityTable).values({
+    type: "conversion",
+    description: `Manual test conversion recorded`,
+    affiliateId: affiliate.id,
+    affiliateName: affiliate.name,
+  });
+
+  res.json({ success: true, message: `Conversion added for ${affiliate.name}` });
 });
 
 /* ─── Stats ──────────────────────────────────────────────────── */
 
 router.get("/admin/stats", requireAdmin, async (_req, res): Promise<void> => {
+  // Prune activity logs older than 48 hours to save space
+  const fortyEightHoursAgo = new Date();
+  fortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);
+  await db.delete(activityTable).where(lt(activityTable.createdAt, fortyEightHoursAgo));
+
   const [totals] = await db.select({ total: count() }).from(affiliatesTable);
   const [active] = await db.select({ cnt: count() }).from(affiliatesTable).where(eq(affiliatesTable.status, "active"));
   const [pending] = await db.select({ cnt: count() }).from(affiliatesTable).where(eq(affiliatesTable.status, "pending"));
@@ -90,6 +112,50 @@ router.get("/admin/stats", requireAdmin, async (_req, res): Promise<void> => {
   });
 });
 
+/* ─── Export CSV ─────────────────────────────────────────────── */
+
+router.get("/admin/affiliates/export", requireAdmin, async (_req, res): Promise<void> => {
+  const affiliates = await db
+    .select()
+    .from(affiliatesTable)
+    .orderBy(desc(affiliatesTable.conversions));
+
+  const headers = [
+    "ID",
+    "Name",
+    "Username",
+    "Email",
+    "WhatsApp",
+    "Status",
+    "Platform",
+    "Clicks",
+    "Conversions",
+    "Joined Date"
+  ];
+
+  const rows = affiliates.map(a => [
+    a.id,
+    `"${a.name.replace(/"/g, '""')}"`,
+    a.username,
+    a.email,
+    a.whatsappNumber,
+    a.status,
+    a.primaryPlatform,
+    a.clicks,
+    a.conversions,
+    new Date(a.createdAt).toLocaleDateString()
+  ]);
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map(r => r.join(","))
+  ].join("\n");
+
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", "attachment; filename=affiliates_export.csv");
+  res.status(200).send(csvContent);
+});
+
 /* ─── Affiliates List ────────────────────────────────────────── */
 
 router.get("/admin/affiliates", requireAdmin, async (req, res): Promise<void> => {
@@ -105,7 +171,7 @@ router.get("/admin/affiliates", requireAdmin, async (req, res): Promise<void> =>
   const ranked = await db
     .select()
     .from(affiliatesTable)
-    .where(eq(affiliatesTable.status, "active"))
+    .where(and(eq(affiliatesTable.status, "active"), gt(affiliatesTable.conversions, 0)))
     .orderBy(desc(affiliatesTable.conversions));
 
   const rankMap = new Map<number, number>();
@@ -162,9 +228,21 @@ router.delete("/admin/affiliates/:id", requireAdmin, async (req, res): Promise<v
   const [deleted] = await db.delete(affiliatesTable).where(eq(affiliatesTable.id, params.data.id)).returning();
   if (!deleted) { res.status(404).json({ error: "Affiliate not found" }); return; }
 
+  // Send Email Notification
+  const isRejection = deleted.status === "pending";
+  await sendEmail({
+    to: deleted.email,
+    subject: isRejection 
+      ? "Update on your DOT FEARLESS WEEK 2.0 application" 
+      : "Account Closed - DOT FEARLESS WEEK 2.0",
+    text: isRejection
+      ? `Hi ${deleted.name},\n\nThank you for your interest in the DOT FEARLESS WEEK 2.0 affiliate program. After reviewing your application, we regret to inform you that it has not been approved at this time as it did not meet our selection criteria.\n\nWe appreciate your interest and wish you the best of luck.\n\n— The DOT Team`
+      : `Hi ${deleted.name},\n\nYour DOT FEARLESS WEEK 2.0 affiliate account has been closed. If you have any questions, please contact our support team.\n\n— The DOT Team`,
+  });
+
   await db.insert(activityTable).values({
-    type: "account_deleted",
-    description: `Affiliate account deleted`,
+    type: isRejection ? "application_rejected" : "account_deleted",
+    description: isRejection ? `Affiliate application rejected` : `Affiliate account deleted`,
     affiliateId: null,
     affiliateName: deleted.name,
   });
@@ -183,6 +261,13 @@ router.post("/admin/affiliates/:id/suspend", requireAdmin, async (req, res): Pro
   if (!updated) { res.status(404).json({ error: "Affiliate not found" }); return; }
 
   const waLink = updated.whatsappNumber ? buildSuspensionWhatsApp(updated.name, updated.whatsappNumber) : null;
+  
+  // Send Email Notification
+  await sendEmail({
+    to: updated.email,
+    subject: "Account Suspended - DOT FEARLESS WEEK 2.0",
+    text: `Hi ${updated.name},\n\nWe're reaching out regarding your DOT FEARLESS WEEK 2.0 affiliate account. Your account has been temporarily suspended.\n\nIf you believe this is a mistake or would like more information, please contact our support team.\n\n— The DOT Team`,
+  });
 
   await Promise.all([
     db.insert(activityTable).values({
@@ -219,6 +304,14 @@ router.post("/admin/affiliates/:id/unsuspend", requireAdmin, async (req, res): P
 
   const waLink = updated.whatsappNumber ? buildReactivationWhatsApp(updated.name, updated.affiliateCode, updated.whatsappNumber) : null;
 
+  // Send Email Notification
+  const link = `${APP_URL}/auth`;
+  await sendEmail({
+    to: updated.email,
+    subject: "Account Reactivated - DOT FEARLESS WEEK 2.0",
+    text: `Hi ${updated.name}!\n\nGreat news — your DOT FEARLESS WEEK 2.0 affiliate account has been reactivated!\n\nLog back in and keep driving referrals: ${link}\n\n— The DOT Team`,
+  });
+
   await Promise.all([
     db.insert(activityTable).values({
       type: "account_unsuspended",
@@ -254,6 +347,14 @@ router.post("/admin/affiliates/:id/approve", requireAdmin, async (req, res): Pro
 
   const waLink = updated.whatsappNumber ? buildApprovalWhatsApp(updated.name, updated.affiliateCode, updated.whatsappNumber) : null;
 
+  // Send Email Notification
+  const trackingLink = `${APP_URL}/api/go/sellenda?aff=${updated.affiliateCode}`;
+  await sendEmail({
+    to: updated.email,
+    subject: "Application Approved - DOT FEARLESS WEEK 2.0",
+    text: `Congratulations ${updated.name}!\n\nYour DOT FEARLESS WEEK 2.0 affiliate application has been approved!\n\n🔗 Your unique tracking link:\n${trackingLink}\n\n📊 Log in to your dashboard to track your performance:\n${APP_URL}/auth\n\n— The DOT Team`,
+  });
+
   await Promise.all([
     db.insert(activityTable).values({
       type: "account_approved",
@@ -283,7 +384,7 @@ router.get("/admin/top-performers", requireAdmin, async (_req, res): Promise<voi
   const affiliates = await db
     .select()
     .from(affiliatesTable)
-    .where(eq(affiliatesTable.status, "active"))
+    .where(and(eq(affiliatesTable.status, "active"), gt(affiliatesTable.conversions, 0)))
     .orderBy(desc(affiliatesTable.conversions))
     .limit(10);
 

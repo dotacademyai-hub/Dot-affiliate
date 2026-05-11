@@ -41,6 +41,7 @@ export const AffiliateRegistrationTicketsSellEstimate = {
 
 export interface AffiliateRegistration {
   name: string;
+  username: string;
   email: string;
   /** @minLength 8 */
   password: string;
@@ -59,9 +60,18 @@ export interface AffiliateRegistration {
 }
 
 export interface LoginInput {
-  email: string;
+  /** Email or Username */
+  identifier: string;
   password: string;
 }
+
+export type AuthResponseRole =
+  (typeof AuthResponseRole)[keyof typeof AuthResponseRole];
+
+export const AuthResponseRole = {
+  admin: "admin",
+  affiliate: "affiliate",
+} as const;
 
 export type AffiliateStatus =
   (typeof AffiliateStatus)[keyof typeof AffiliateStatus];
@@ -75,6 +85,7 @@ export const AffiliateStatus = {
 export interface Affiliate {
   id: number;
   name: string;
+  username: string;
   email: string;
   whatsappNumber?: string;
   /** @nullable */
@@ -94,8 +105,9 @@ export interface Affiliate {
 }
 
 export interface AuthResponse {
-  affiliate: Affiliate;
+  affiliate?: Affiliate;
   token: string;
+  role?: AuthResponseRole;
 }
 
 export interface AffiliateStats {
@@ -113,7 +125,7 @@ export interface AffiliateDashboard {
 
 export interface LeaderboardEntry {
   rank: number;
-  name: string;
+  username: string;
   primaryPlatform: string;
   conversions: number;
   clicks: number;
@@ -133,6 +145,7 @@ export const AffiliateSettingsUpdatePrimaryPlatform = {
 
 export interface AffiliateSettingsUpdate {
   name?: string;
+  username?: string;
   whatsappNumber?: string;
   /** @nullable */
   phoneNumber?: string | null;
@@ -157,6 +170,7 @@ export const AffiliateDetailStatus = {
 export interface AffiliateDetail {
   id: number;
   name: string;
+  username: string;
   email: string;
   whatsappNumber?: string;
   /** @nullable */
@@ -194,16 +208,6 @@ export interface AdminStats {
   totalClicks: number;
   totalConversions: number;
   conversionRate: number;
-}
-
-export interface AdminLoginInput {
-  username: string;
-  password: string;
-}
-
-export interface AdminAuthResponse {
-  token: string;
-  role: string;
 }
 
 export interface ActivityEntry {

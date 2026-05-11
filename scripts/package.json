@@ -10,5 +10,12 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "tsx": "catalog:"
+  },
+  "dependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "@workspace/db": "workspace:*",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "nanoid": "^5.1.11"
   }
 }

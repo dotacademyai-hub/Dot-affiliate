@@ -8,7 +8,7 @@
 
 export interface LeaderboardEntry {
   rank: number;
-  name: string;
+  username: string;
   primaryPlatform: string;
   conversions: number;
   clicks: number;

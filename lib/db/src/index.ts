@@ -1,6 +1,14 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import * as schema from "./schema";
+import * as dotenv from "dotenv";
+import { join } from "path";
+
+// Support loading .env from project root if not already loaded
+dotenv.config({ path: join(process.cwd(), "../../.env") });
+dotenv.config({ path: join(process.cwd(), "../../../.env") });
+dotenv.config({ path: join(process.cwd(), ".env") });
+dotenv.config(); // Fallback to local .env
 
 const { Pool } = pg;
 

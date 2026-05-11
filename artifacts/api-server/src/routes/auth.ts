@@ -9,10 +9,15 @@ import {
 import {
   signAffiliateToken,
   requireAffiliate,
+  signAdminToken,
 } from "../middlewares/auth";
 import { generateAffiliateCode } from "../lib/affiliateCode";
+import { sendEmail, notifyAdmins } from "../lib/email";
 
 const router: IRouter = Router();
+
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "fearless2025admin";
 
 function safeAffiliate(a: typeof affiliatesTable.$inferSelect) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -36,7 +41,18 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     .limit(1);
 
   if (existing.length > 0) {
-    res.status(409).json({ error: "An account with this email already exists" });
+    res.status(409).json({ error: "An account with this email already exists. Please login instead." });
+    return;
+  }
+
+  const existingUsername = await db
+    .select()
+    .from(affiliatesTable)
+    .where(eq(affiliatesTable.username, rest.username))
+    .limit(1);
+
+  if (existingUsername.length > 0) {
+    res.status(409).json({ error: "This username is already taken. Please choose another one." });
     return;
   }
 
@@ -60,6 +76,21 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         return `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
       })()
     : null;
+
+  // Send Email Notifications
+  await Promise.all([
+    // Notify Affiliate
+    sendEmail({
+      to: affiliate.email,
+      subject: "Application Received - DOT FEARLESS WEEK 2.0",
+      text: `Hi ${affiliate.name},\n\nWe've received your FEARLESS WEEK 2.0 affiliate application! Our team will review it shortly and get back to you.\n\nStay tuned!\n\n— The DOT Team`,
+    }),
+    // Notify Admin
+    notifyAdmins(
+      `New Application: ${affiliate.name}`,
+      `A new affiliate application has been submitted.\n\nName: ${affiliate.name}\nEmail: ${affiliate.email}\nPlatform: ${affiliate.primaryPlatform}\n\nReview it here: ${process.env.APP_URL}/fearless-control-gate-2025`
+    ),
+  ]);
 
   await Promise.all([
     db.insert(activityTable).values({
@@ -92,20 +123,33 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  const [affiliate] = await db
-    .select()
-    .from(affiliatesTable)
-    .where(eq(affiliatesTable.email, parsed.data.email))
-    .limit(1);
+  const { identifier, password } = parsed.data;
 
-  if (!affiliate) {
-    res.status(401).json({ error: "Invalid email or password" });
+  // 1. Check if it's the Admin
+  if (identifier === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    const token = signAdminToken({ role: "admin", username: identifier });
+    res.json({ token, role: "admin" });
     return;
   }
 
-  const valid = await bcrypt.compare(parsed.data.password, affiliate.passwordHash);
+  // 2. Check if it's an Affiliate
+  const [affiliate] = await db
+    .select()
+    .from(affiliatesTable)
+    .where(identifier.includes("@") 
+      ? eq(affiliatesTable.email, identifier) 
+      : eq(affiliatesTable.username, identifier)
+    )
+    .limit(1);
+
+  if (!affiliate) {
+    res.status(401).json({ error: "No login credentials found for this user" });
+    return;
+  }
+
+  const valid = await bcrypt.compare(password, affiliate.passwordHash);
   if (!valid) {
-    res.status(401).json({ error: "Invalid email or password" });
+    res.status(401).json({ error: "Invalid password. Please try again." });
     return;
   }
 
@@ -115,7 +159,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 
   const token = signAffiliateToken({ affiliateId: affiliate.id, email: affiliate.email });
-  res.json({ affiliate: safeAffiliate(affiliate), token });
+  res.json({ affiliate: safeAffiliate(affiliate), token, role: "affiliate" });
 });
 
 router.post("/auth/logout", (_req, res): void => {

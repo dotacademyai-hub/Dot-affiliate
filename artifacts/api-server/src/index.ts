@@ -1,3 +1,11 @@
+import * as dotenv from "dotenv";
+import { join } from "path";
+
+// Load environment variables from root .env
+dotenv.config({ path: join(process.cwd(), "../../.env") });
+dotenv.config({ path: join(process.cwd(), ".env") });
+dotenv.config();
+
 import app from "./app";
 import { logger } from "./lib/logger";
 

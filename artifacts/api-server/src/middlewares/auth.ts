@@ -41,11 +41,13 @@ export function requireAffiliate(req: Request, res: Response, next: NextFunction
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
+  const queryToken = req.query.token as string;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : queryToken;
+
+  if (!token) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const token = authHeader.slice(7);
   try {
     const payload = jwt.verify(token, ADMIN_SECRET) as AdminJwtPayload;
     if (payload.role !== "admin") {

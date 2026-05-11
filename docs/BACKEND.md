@@ -103,11 +103,11 @@ Tokens expire after **7 days**. On 401, the custom fetch client auto-clears the 
 
 ### Admin (`/api/admin`)
 
-All admin routes require `Authorization: Bearer <adminToken>`.
+All admin routes require `Authorization: Bearer <adminToken>`. The admin dashboard is located at `/fearless-control-gate-2025`.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/admin/login` | Admin auth — returns JWT |
+| `POST` | `/api/auth/login` | Admin auth — returns JWT (shared with affiliate login) |
 | `GET`  | `/api/admin/stats` | Platform overview stats |
 | `GET`  | `/api/admin/affiliates` | Paginated affiliate list (search, filter by status) |
 | `GET`  | `/api/admin/activity` | Full activity log |

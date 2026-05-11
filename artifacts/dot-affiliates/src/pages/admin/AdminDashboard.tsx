@@ -35,17 +35,26 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Users, TrendingUp, MousePointer, ShoppingCart, Clock, CheckCircle, Ban,
+import { Menu, Users, TrendingUp, MousePointer, ShoppingCart, Clock, CheckCircle, Ban,
   Trash2, Moon, Sun, LogOut, Activity, Trophy, Search,
   ShieldCheck, BarChart2, UserCheck, UserX, ChevronLeft, ChevronRight,
-  Bell, X, CheckCheck, UserPlus, Settings,
+  Bell, X, CheckCheck, UserPlus, Settings, Eye, Info, Download
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import logoPath from "@assets/f45832e5-fd75-4649-94b8-25101588a119_removalai_preview_1778429832966.png";
@@ -93,7 +102,7 @@ function NotificationPanel({
   onClose: () => void;
 }) {
   const queryClient = useQueryClient();
-  const { data, isLoading } = useAdminGetNotifications({ query: { refetchInterval: 15000 } });
+  const { data, isLoading } = useAdminGetNotifications({ query: { queryKey: getAdminGetNotificationsQueryKey(), refetchInterval: 15000 } });
   const markRead = useAdminMarkNotificationRead();
   const markAllRead = useAdminMarkAllNotificationsRead();
 
@@ -115,9 +124,9 @@ function NotificationPanel({
   const unread = data?.unreadCount ?? 0;
 
   return (
-    <div className="absolute right-0 top-full mt-2 w-[420px] max-h-[540px] flex flex-col rounded-2xl border border-border bg-card shadow-2xl z-50 overflow-hidden">
+    <div className="w-full sm:w-[420px] max-h-[80vh] sm:max-h-[540px] flex flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <Bell className="w-4 h-4 text-primary" />
           <span className="font-bold text-sm">Notifications</span>
@@ -130,13 +139,21 @@ function NotificationPanel({
         <div className="flex items-center gap-2">
           {unread > 0 && (
             <button
+              type="button"
               onClick={handleMarkAll}
               className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
+              title="Mark all notifications as read"
             >
               <CheckCheck className="w-3.5 h-3.5" /> Mark all read
             </button>
           )}
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="text-muted-foreground hover:text-foreground transition-colors" 
+            aria-label="Close notifications" 
+            title="Close notifications"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -195,8 +212,13 @@ function NotificationPanel({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => !n.isRead && handleMarkOne(n.id)}
+                          aria-label={n.type === "new_application" ? "Send receipt via WhatsApp" : "Notify via WhatsApp"}
+                          title={n.type === "new_application" ? "Send receipt via WhatsApp" : "Notify via WhatsApp"}
                         >
-                          <button className="flex items-center gap-1 text-xs font-semibold text-[#25D366] hover:text-[#25D366]/80 bg-[#25D366]/10 hover:bg-[#25D366]/20 px-2.5 py-1 rounded-full transition-colors">
+                          <button 
+                            type="button"
+                            className="flex items-center gap-1 text-xs font-semibold text-[#25D366] hover:text-[#25D366]/80 bg-[#25D366]/10 hover:bg-[#25D366]/20 px-2.5 py-1 rounded-full transition-colors"
+                          >
                             <FaWhatsapp className="w-3 h-3" />
                             {n.type === "new_application" ? "Send receipt" : "Notify via WhatsApp"}
                           </button>
@@ -204,8 +226,10 @@ function NotificationPanel({
                       )}
                       {!n.isRead && (
                         <button
+                          type="button"
                           onClick={() => handleMarkOne(n.id)}
                           className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          title="Dismiss notification"
                         >
                           Dismiss
                         </button>
@@ -222,6 +246,118 @@ function NotificationPanel({
   );
 }
 
+function DetailItem({ label, value }: { label: string; value: string | number | boolean | null }) {
+  return (
+    <div className="space-y-1">
+      <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="text-sm font-semibold">{value === true ? "Yes" : value === false ? "No" : value || "—"}</div>
+    </div>
+  );
+}
+
+function AffiliateDetailDialog({ affiliate, children }: { affiliate: any; children: React.ReactNode }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+        <DialogHeader>
+          <div className="flex items-center justify-between pr-8">
+            <DialogTitle className="text-2xl font-black">Affiliate Details</DialogTitle>
+            <StatusBadge status={affiliate.status} />
+          </div>
+          <DialogDescription>
+            Complete registration details and performance metrics for {affiliate.name}.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-6">
+          <div className="space-y-6">
+            <div className="font-bold text-primary flex items-center gap-2 border-b border-border pb-2">
+              <Users className="w-4 h-4" /> Personal Info
+            </div>
+            <div className="grid grid-cols-1 gap-4">
+              <DetailItem label="Full Name" value={affiliate.name} />
+              <DetailItem label="Username" value={affiliate.username} />
+              <DetailItem label="Email Address" value={affiliate.email} />
+              <DetailItem label="WhatsApp Number" value={affiliate.whatsappNumber} />
+              <DetailItem label="Affiliate Code" value={affiliate.affiliateCode || "Not generated yet"} />
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="font-bold text-primary flex items-center gap-2 border-b border-border pb-2">
+              <TrendingUp className="w-4 h-4" /> Performance
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <DetailItem label="Total Clicks" value={affiliate.clicks} />
+              <DetailItem label="Paid Referrals" value={affiliate.conversions} />
+              <DetailItem label="Current Rank" value={affiliate.rank ? `#${affiliate.rank}` : "Unranked"} />
+              <DetailItem label="Joined" value={new Date(affiliate.createdAt).toLocaleDateString()} />
+            </div>
+          </div>
+
+          <div className="space-y-6 md:col-span-2">
+            <div className="font-bold text-primary flex items-center gap-2 border-b border-border pb-2">
+              <Info className="w-4 h-4" /> Registration Questionnaire (Full Details)
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <DetailItem label="Primary Platform" value={affiliate.primaryPlatform} />
+              <DetailItem label="Average Engagement" value={affiliate.avgEngagement} />
+              <DetailItem label="Has Promoted Before" value={affiliate.hasPromotedBefore ? "Yes" : "No"} />
+              <DetailItem label="WhatsApp Groups Reach" value={affiliate.whatsappGroupsReach} />
+              <DetailItem label="Tickets Sell Estimate" value={affiliate.ticketsSellEstimate} />
+              <DetailItem label="Willing to Promote" value={affiliate.willingToPromote ? "Yes" : "No"} />
+            </div>
+            <div className="pt-4 p-4 rounded-xl bg-muted/50 border border-border">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Why should we select you?</div>
+              <div className="text-sm leading-relaxed whitespace-pre-wrap">{affiliate.whySelectYou || "No explanation provided."}</div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="sm:justify-start">
+          <DialogClose asChild>
+            <Button type="button" variant="outline" className="w-full">
+              Close Details
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RankBadge({ rank }: { rank: number }) {
+  if (rank === 1) return (
+    <div className="flex items-center justify-center w-8 h-8 rounded-lg border border-yellow-500/50 shadow-[0_0_15px_rgba(250,204,21,0.3)]">
+      <span className="font-black text-lg italic text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]">01</span>
+    </div>
+  );
+  if (rank === 2) return (
+    <div className="flex items-center justify-center w-8 h-8 rounded-lg border border-slate-400/50 shadow-[0_0_15px_rgba(226,232,240,0.3)]">
+      <span className="font-black text-lg italic text-slate-100 drop-shadow-[0_0_5px_rgba(226,232,240,0.5)]">02</span>
+    </div>
+  );
+  if (rank === 3) return (
+    <div className="flex items-center justify-center w-8 h-8 rounded-lg border border-amber-700/50 shadow-[0_0_15px_rgba(217,119,6,0.3)]">
+      <span className="font-black text-lg italic text-amber-500 drop-shadow-[0_0_5px_rgba(217,119,6,0.5)]">03</span>
+    </div>
+  );
+  if (rank === 4) return (
+    <div className="flex items-center justify-center w-8 h-8 rounded-lg border border-cyan-500/50 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
+      <span className="font-black text-lg italic text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">04</span>
+    </div>
+  );
+  if (rank <= 10) return (
+    <div className="flex items-center justify-center w-8 h-8 rounded-lg border border-emerald-600/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+      <span className="font-black text-sm text-emerald-500 drop-shadow-[0_0_3px_rgba(16,185,129,0.5)]">{String(rank).padStart(2, "0")}</span>
+    </div>
+  );
+  return <span className="text-muted-foreground font-bold text-sm ml-2">{String(rank).padStart(2, "0")}</span>;
+}
+
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const { theme, setTheme } = useTheme();
@@ -234,6 +370,8 @@ export default function AdminDashboard() {
   const notifRef = useRef<HTMLDivElement>(null);
   const LIMIT = 15;
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const { data: stats, isLoading: statsLoading } = useAdminGetStats();
   const { data: affiliatesData, isLoading: affiliatesLoading } = useAdminListAffiliates({
     status: statusFilter !== "all" ? statusFilter as "active" | "pending" | "suspended" : undefined,
@@ -243,7 +381,7 @@ export default function AdminDashboard() {
   }, { query: { queryKey: getAdminListAffiliatesQueryKey({ status: statusFilter !== "all" ? statusFilter as "active" | "pending" | "suspended" : undefined, search: search || undefined, page, limit: LIMIT }) } });
   const { data: activity, isLoading: activityLoading } = useAdminGetActivity();
   const { data: topPerformers, isLoading: topLoading } = useAdminGetTopPerformers();
-  const { data: notifData } = useAdminGetNotifications({ query: { refetchInterval: 15000 } });
+  const { data: notifData } = useAdminGetNotifications({ query: { queryKey: getAdminGetNotificationsQueryKey(), refetchInterval: 15000 } });
 
   const suspendMutation = useAdminSuspendAffiliate();
   const unsuspendMutation = useAdminUnsuspendAffiliate();
@@ -293,7 +431,13 @@ export default function AdminDashboard() {
 
   const logout = () => {
     localStorage.removeItem("adminToken");
-    setLocation("/admin");
+    setLocation("/auth");
+  };
+
+  const handleExport = () => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+    window.open(`/api/admin/affiliates/export?token=${token}`, "_blank");
   };
 
   const totalPages = affiliatesData ? Math.ceil(affiliatesData.total / LIMIT) : 1;
@@ -306,23 +450,47 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
+    <div className="min-h-screen bg-background text-foreground flex overflow-hidden">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-60 border-r border-border bg-card flex-shrink-0 flex flex-col" data-testid="admin-sidebar">
-        <div className="p-5 border-b border-border flex items-center gap-3">
-          <img src={logoPath} alt="DOT" className="w-7 h-7 object-contain dark:brightness-100 brightness-50" />
-          <div>
-            <div className="font-black text-sm">DOT Admin</div>
-            <div className="text-xs text-primary flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Control Panel</div>
+      <aside className={`fixed inset-y-0 left-0 w-64 border-r border-border bg-card z-50 transition-transform duration-300 transform lg:relative lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`} data-testid="admin-sidebar">
+        <div className="p-5 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={logoPath} alt="DOT" className="w-7 h-7 object-contain dark:brightness-100 brightness-50" />
+            <div>
+              <div className="font-black text-sm">DOT Admin</div>
+              <div className="text-xs text-primary flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Control Panel</div>
+            </div>
           </div>
+          <button 
+            type="button"
+            className="lg:hidden p-2 hover:bg-accent rounded-lg"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar"
+            title="Close sidebar"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
-        <nav className="flex-1 p-3 space-y-1">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setSection(item.id)}
+              type="button"
+              onClick={() => {
+                setSection(item.id);
+                setSidebarOpen(false);
+              }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${section === item.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}
               data-testid={`nav-${item.id}`}
+              title={item.label}
             >
               {item.icon}
               {item.label}
@@ -331,17 +499,21 @@ export default function AdminDashboard() {
         </nav>
         <div className="p-3 border-t border-border space-y-1">
           <button
+            type="button"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
             data-testid="button-theme-toggle"
+            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             {theme === "dark" ? "Light Mode" : "Dark Mode"}
           </button>
           <button
+            type="button"
             onClick={logout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-destructive hover:bg-destructive/10 transition-all"
             data-testid="button-admin-logout"
+            title="Logout from admin panel"
           >
             <LogOut className="w-4 h-4" /> Logout
           </button>
@@ -349,18 +521,31 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto h-screen flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border px-6 py-4 flex items-center justify-between">
-          <h1 className="font-black text-lg capitalize">{section.replace("-", " ")}</h1>
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border px-4 sm:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button 
+              type="button"
+              className="lg:hidden p-2 hover:bg-accent rounded-lg"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar"
+              title="Open sidebar"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <h1 className="font-black text-lg capitalize">{section.replace("-", " ")}</h1>
+          </div>
 
           {/* Notification Bell */}
           <div className="relative" ref={notifRef}>
             <button
+              type="button"
               onClick={() => setNotifOpen((v) => !v)}
               className="relative w-10 h-10 rounded-xl flex items-center justify-center hover:bg-accent transition-colors border border-border"
               data-testid="button-notifications"
               aria-label="Notifications"
+              title="View notifications"
             >
               <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
@@ -371,12 +556,14 @@ export default function AdminDashboard() {
             </button>
 
             {notifOpen && (
-              <NotificationPanel onClose={() => setNotifOpen(false)} />
+              <div className="fixed sm:absolute right-0 sm:right-0 top-[70px] sm:top-full w-full sm:w-[420px] px-4 sm:px-0 z-50">
+                <NotificationPanel onClose={() => setNotifOpen(false)} />
+              </div>
             )}
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6 flex-1">
           {/* DASHBOARD */}
           {section === "dashboard" && (
             <div className="space-y-6">
@@ -423,10 +610,12 @@ export default function AdminDashboard() {
                     You have pending items that need your attention — new applications and status updates awaiting action.
                   </p>
                   <Button
+                    type="button"
                     size="sm"
                     variant="outline"
                     onClick={() => setNotifOpen(true)}
                     className="border-primary/30 text-primary hover:bg-primary/10"
+                    title="View all notifications"
                   >
                     <Bell className="w-3.5 h-3.5 mr-2" /> View Notifications
                   </Button>
@@ -445,12 +634,12 @@ export default function AdminDashboard() {
                     placeholder="Search by name or email..."
                     value={search}
                     onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                    className="pl-9"
+                    className="pl-9 w-full"
                     data-testid="input-search-affiliates"
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
-                  <SelectTrigger className="w-40" data-testid="select-status-filter">
+                  <SelectTrigger className="w-full sm:w-40" data-testid="select-status-filter">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -460,6 +649,14 @@ export default function AdminDashboard() {
                     <SelectItem value="suspended">Suspended</SelectItem>
                   </SelectContent>
                 </Select>
+                <Button
+                  variant="outline"
+                  onClick={handleExport}
+                  className="w-full sm:w-auto border-primary/30 text-primary hover:bg-primary/5 font-bold"
+                  title="Export all affiliates to CSV"
+                >
+                  <Download className="w-4 h-4 mr-2" /> Export CSV
+                </Button>
               </div>
 
               <div className="rounded-2xl border border-border bg-card overflow-hidden" data-testid="affiliates-table">
@@ -468,7 +665,7 @@ export default function AdminDashboard() {
                     <thead>
                       <tr className="border-b border-border bg-muted/30">
                         <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">#</th>
-                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Name</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Name / Username</th>
                         <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Email</th>
                         <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Platform</th>
                         <th className="text-right px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Clicks</th>
@@ -494,8 +691,13 @@ export default function AdminDashboard() {
                         </tr>
                       ) : affiliatesData?.data.map((a) => (
                         <tr key={a.id} className="border-b border-border/50 hover:bg-accent/5 transition-colors" data-testid={`affiliate-row-${a.id}`}>
-                          <td className="px-4 py-3 text-muted-foreground">{a.rank ? `#${a.rank}` : "—"}</td>
-                          <td className="px-4 py-3 font-semibold">{a.name}</td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            <RankBadge rank={a.rank ?? 0} />
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="font-semibold">{a.name}</div>
+                            <div className="text-[10px] text-primary font-bold">@{a.username}</div>
+                          </td>
                           <td className="px-4 py-3 text-muted-foreground text-xs">{a.email}</td>
                           <td className="px-4 py-3">
                             <span className="capitalize text-xs font-medium">{a.primaryPlatform}</span>
@@ -507,10 +709,42 @@ export default function AdminDashboard() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-center gap-1.5">
+                              <AffiliateDetailDialog affiliate={a}>
+                                <Button size="sm" variant="ghost" className="h-7 px-2 text-primary hover:bg-primary/10 text-xs" data-testid={`button-view-${a.id}`}>
+                                  <Eye className="w-3.5 h-3.5 mr-1" /> View
+                                </Button>
+                              </AffiliateDetailDialog>
+                              
                               {a.status === "pending" && (
                                 <Button size="sm" variant="ghost" onClick={() => handleApprove(a.id)} className="h-7 px-2 text-green-500 hover:bg-green-500/10 text-xs" data-testid={`button-approve-${a.id}`}>
                                   <CheckCircle className="w-3.5 h-3.5 mr-1" /> Approve
                                 </Button>
+                              )}
+                              {a.status === "pending" && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button size="sm" variant="ghost" className="h-7 px-2 text-red-500 hover:bg-red-500/10 text-xs" data-testid={`button-reject-${a.id}`}>
+                                      <UserX className="w-3.5 h-3.5 mr-1" /> Reject
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent className="w-[95vw] sm:max-w-md">
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Reject Application</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to reject the application from <strong>{a.name}</strong>? They will be notified via email and their data will be removed.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete(a.id)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Reject Application
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               )}
                               {a.status === "active" && (
                                 <Button size="sm" variant="ghost" onClick={() => handleSuspend(a.id)} className="h-7 px-2 text-amber-500 hover:bg-amber-500/10 text-xs" data-testid={`button-suspend-${a.id}`}>
@@ -523,7 +757,13 @@ export default function AdminDashboard() {
                                 </Button>
                               )}
                               {a.whatsappNumber && (
-                                <a href={`https://wa.me/${a.whatsappNumber.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer">
+                                <a 
+                                  href={`https://wa.me/${a.whatsappNumber.replace(/[^0-9]/g, "")}`} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  aria-label={`Contact ${a.name} on WhatsApp`}
+                                  title={`Contact ${a.name} on WhatsApp`}
+                                >
                                   <Button size="sm" variant="ghost" className="h-7 px-2 text-[#25D366] hover:bg-[#25D366]/10" data-testid={`button-whatsapp-${a.id}`}>
                                     <FaWhatsapp className="w-3.5 h-3.5" />
                                   </Button>
@@ -531,11 +771,45 @@ export default function AdminDashboard() {
                               )}
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="ghost" className="h-7 px-2 text-primary hover:bg-primary/10" title="Add Test Conversion">
+                                    <ShoppingCart className="w-3.5 h-3.5" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="w-[95vw] sm:max-w-md">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Add Test Conversion</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will add 1 paid referral to <strong>{a.name}</strong> for testing purposes.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={async () => {
+                                        const token = localStorage.getItem("adminToken");
+                                        await fetch("/api/admin/test/conversion", {
+                                          method: "POST",
+                                          headers: { 
+                                            "Content-Type": "application/json",
+                                            "Authorization": `Bearer ${token}`
+                                          },
+                                          body: JSON.stringify({ affiliateId: a.id })
+                                        });
+                                        invalidateAll();
+                                      }}
+                                    >
+                                      Add Test Ref
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
                                   <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive hover:bg-destructive/10" data-testid={`button-delete-${a.id}`}>
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent>
+                                <AlertDialogContent className="w-[95vw] sm:max-w-md">
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Delete Affiliate</AlertDialogTitle>
                                     <AlertDialogDescription>
@@ -590,14 +864,14 @@ export default function AdminDashboard() {
                 <div className="p-6 space-y-3">
                   {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
                 </div>
-              ) : activity?.length === 0 ? (
+              ) : !Array.isArray(activity) || activity.length === 0 ? (
                 <div className="py-16 text-center text-muted-foreground">
                   <Activity className="w-10 h-10 mx-auto mb-3 opacity-30" />
                   <p>No activity yet</p>
                 </div>
               ) : (
                 <div className="divide-y divide-border/50">
-                  {activity?.map((act, i) => (
+                  {activity.map((act: any, i: number) => (
                     <div key={i} className="px-5 py-4 flex items-center gap-4" data-testid={`activity-row-${i}`}>
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${act.type.includes("approve") || act.type.includes("unsuspend") ? "bg-green-500" : act.type.includes("suspend") || act.type.includes("delete") ? "bg-red-500" : "bg-primary"}`} />
                       <div className="flex-1">
@@ -621,13 +895,18 @@ export default function AdminDashboard() {
             <div className="space-y-4">
               {topLoading ? (
                 Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-2xl" />)
-              ) : topPerformers?.map((a, i) => (
+              ) : !Array.isArray(topPerformers) || topPerformers.length === 0 ? (
+                <div className="py-16 text-center text-muted-foreground">
+                  <Trophy className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p>No performers yet</p>
+                </div>
+              ) : topPerformers.map((a: any, i: number) => (
                 <div key={a.id} className={`flex items-center gap-4 p-5 rounded-2xl border bg-card transition-all hover:border-primary/40 ${i < 3 ? "border-primary/20" : "border-border"}`} data-testid={`top-performer-${a.id}`}>
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg flex-shrink-0 ${i === 0 ? "bg-yellow-500/20 text-yellow-400" : i === 1 ? "bg-gray-400/20 text-gray-300" : i === 2 ? "bg-amber-600/20 text-amber-600" : "bg-primary/10 text-primary"}`}>
-                    {i + 1}
+                  <div className="flex-shrink-0">
+                    <RankBadge rank={i + 1} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold truncate">{a.name}</div>
+                    <div className="font-bold truncate">{a.name} (@{a.username})</div>
                     <div className="text-xs text-muted-foreground capitalize">{a.primaryPlatform} · {a.email}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
@@ -639,7 +918,13 @@ export default function AdminDashboard() {
                     <div className="text-xs text-muted-foreground">Clicks</div>
                   </div>
                   {a.whatsappNumber && (
-                    <a href={`https://wa.me/${a.whatsappNumber.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer">
+                    <a 
+                      href={`https://wa.me/${a.whatsappNumber.replace(/[^0-9]/g, "")}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      aria-label={`Contact ${a.name} on WhatsApp`}
+                      title={`Contact ${a.name} on WhatsApp`}
+                    >
                       <Button size="sm" variant="ghost" className="text-[#25D366] hover:bg-[#25D366]/10" data-testid={`button-wa-top-${a.id}`}>
                         <FaWhatsapp className="w-4 h-4" />
                       </Button>

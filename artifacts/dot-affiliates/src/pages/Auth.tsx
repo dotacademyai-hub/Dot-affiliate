@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,12 +14,13 @@ import logoPath from "@assets/f45832e5-fd75-4649-94b8-25101588a119_removalai_pre
 import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  identifier: z.string().min(1, "Email or username required"),
   password: z.string().min(1, "Password required"),
 });
 
 const signupStep1Schema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
+  username: z.string().min(3, "Username must be at least 3 characters").regex(/^[a-zA-Z0-9_]+$/, "Only letters, numbers and underscores allowed"),
   email: z.string().email("Invalid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   whatsappNumber: z.string().min(7, "WhatsApp number required"),
@@ -142,8 +143,13 @@ export default function Auth() {
   const onLogin = loginForm.handleSubmit(async (data) => {
     try {
       const res = await loginMutation.mutateAsync({ data });
-      localStorage.setItem("affiliateToken", res.token);
-      setLocation("/dashboard");
+      if (res.role === "admin") {
+        localStorage.setItem("adminToken", res.token);
+        setLocation("/fearless-control-gate-2025");
+      } else {
+        localStorage.setItem("affiliateToken", res.token);
+        setLocation("/dashboard");
+      }
     } catch (err: unknown) {
       const msg = err && typeof err === "object" && "data" in err ? (err as { data?: { error?: string } }).data?.error : "Login failed";
       toast({ title: "Login failed", description: msg ?? "Invalid credentials", variant: "destructive" });
@@ -171,6 +177,7 @@ export default function Auth() {
     const all = { ...signupData, ...data };
     const payload = {
       name: all.name!,
+      username: all.username!,
       email: all.email!,
       password: all.password!,
       whatsappNumber: all.whatsappNumber!,
@@ -197,11 +204,13 @@ export default function Auth() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-        <button onClick={() => setLocation("/")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors" data-testid="button-back-home">
-          <ArrowLeft className="w-4 h-4" />
-          <img src={logoPath} alt="DOT" className="w-7 h-7 object-contain dark:brightness-100 brightness-50" />
-          <span className="font-black">DOT</span>
-        </button>
+        <Link href="/">
+          <button className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors" data-testid="button-back-home">
+            <ArrowLeft className="w-4 h-4" />
+            <img src={logoPath} alt="DOT" className="w-7 h-7 object-contain dark:brightness-100 brightness-50" />
+            <span className="font-black">DOT</span>
+          </button>
+        </Link>
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-accent transition-colors"
@@ -228,9 +237,9 @@ export default function Auth() {
               <p className="text-muted-foreground text-sm mb-8">Sign in to your affiliate dashboard</p>
               <form onSubmit={onLogin} className="space-y-4">
                 <div>
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input id="login-email" type="email" placeholder="you@example.com" autoComplete="email" {...loginForm.register("email")} className="mt-1" data-testid="input-login-email" />
-                  {loginForm.formState.errors.email && <p className="text-destructive text-xs mt-1">{loginForm.formState.errors.email.message}</p>}
+                  <Label htmlFor="login-identifier">Email or Username</Label>
+                  <Input id="login-identifier" placeholder="you@example.com or username" autoComplete="username" {...loginForm.register("identifier")} className="mt-1" data-testid="input-login-identifier" />
+                  {loginForm.formState.errors.identifier && <p className="text-destructive text-xs mt-1">{loginForm.formState.errors.identifier.message}</p>}
                 </div>
                 <div>
                   <Label htmlFor="login-password">Password</Label>
@@ -282,6 +291,11 @@ export default function Auth() {
                     <Label htmlFor="name">Full Name <span className="text-destructive">*</span></Label>
                     <Input id="name" placeholder="Your full name" {...step1Form.register("name")} className="mt-1" data-testid="input-name" />
                     {step1Form.formState.errors.name && <p className="text-destructive text-xs mt-1">{step1Form.formState.errors.name.message}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="username">Username <span className="text-destructive">*</span></Label>
+                    <Input id="username" placeholder="Choose a username" {...step1Form.register("username")} className="mt-1" data-testid="input-username" />
+                    {step1Form.formState.errors.username && <p className="text-destructive text-xs mt-1">{step1Form.formState.errors.username.message}</p>}
                   </div>
                   <div>
                     <Label htmlFor="su-email">Email <span className="text-destructive">*</span></Label>

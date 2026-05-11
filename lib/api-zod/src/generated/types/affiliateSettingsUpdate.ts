@@ -9,6 +9,7 @@ import type { AffiliateSettingsUpdatePrimaryPlatform } from "./affiliateSettings
 
 export interface AffiliateSettingsUpdate {
   name?: string;
+  username?: string;
   whatsappNumber?: string;
   /** @nullable */
   phoneNumber?: string | null;

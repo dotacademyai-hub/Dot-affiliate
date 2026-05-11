@@ -10,6 +10,7 @@ import type { AffiliateRegistrationTicketsSellEstimate } from "./affiliateRegist
 
 export interface AffiliateRegistration {
   name: string;
+  username: string;
   email: string;
   /** @minLength 8 */
   password: string;

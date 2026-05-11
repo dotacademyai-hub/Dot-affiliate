@@ -65,9 +65,24 @@ router.put("/affiliate/settings", requireAffiliate, async (req, res): Promise<vo
 
   const updateData: Record<string, unknown> = {};
   if (parsed.data.name != null) updateData.name = parsed.data.name;
+  if (parsed.data.username != null) updateData.username = parsed.data.username;
   if (parsed.data.whatsappNumber != null) updateData.whatsappNumber = parsed.data.whatsappNumber;
   if (parsed.data.phoneNumber !== undefined) updateData.phoneNumber = parsed.data.phoneNumber;
   if (parsed.data.primaryPlatform != null) updateData.primaryPlatform = parsed.data.primaryPlatform;
+
+  // Check if username is taken if it's being changed
+  if (parsed.data.username != null) {
+    const [existing] = await db
+      .select()
+      .from(affiliatesTable)
+      .where(eq(affiliatesTable.username, parsed.data.username))
+      .limit(1);
+    
+    if (existing && existing.id !== affiliateId) {
+      res.status(409).json({ error: "Username is already taken" });
+      return;
+    }
+  }
 
   const [updated] = await db
     .update(affiliatesTable)

@@ -7,10 +7,8 @@
  */
 
 export * from "./activityEntry";
-export * from "./adminAuthResponse";
 export * from "./adminListAffiliatesParams";
 export * from "./adminListAffiliatesStatus";
-export * from "./adminLoginInput";
 export * from "./adminStats";
 export * from "./affiliate";
 export * from "./affiliateDashboard";
@@ -24,6 +22,7 @@ export * from "./affiliateSettingsUpdatePrimaryPlatform";
 export * from "./affiliateStats";
 export * from "./affiliateStatus";
 export * from "./authResponse";
+export * from "./authResponseRole";
 export * from "./errorResponse";
 export * from "./healthStatus";
 export * from "./leaderboardEntry";

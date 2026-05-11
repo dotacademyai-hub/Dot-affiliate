@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "artifacts/api-server/index.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "artifacts/dot-affiliates/$1"
+    }
+  ],
+  "functions": {
+    "artifacts/api-server/index.ts": {
+      "runtime": "vercel-node@latest"
+    }
+  }
+}

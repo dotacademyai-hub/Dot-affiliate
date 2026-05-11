@@ -10,6 +10,7 @@ import type { AffiliateStatus } from "./affiliateStatus";
 export interface Affiliate {
   id: number;
   name: string;
+  username: string;
   email: string;
   whatsappNumber?: string;
   /** @nullable */

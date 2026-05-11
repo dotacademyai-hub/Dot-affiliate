@@ -7,6 +7,7 @@ import { nanoid } from "nanoid";
 const router = Router();
 
 const SELLENDA_URL = "https://sellenda.com.ng/buy/3561B2";
+const APP_URL = process.env.APP_URL ?? "https://dotacademyai-hub.vercel.app";
 
 router.get("/public/leaderboard", async (_req, res): Promise<void> => {
   const affiliates = await db
@@ -135,8 +136,8 @@ router.get("/go/sellenda", async (req, res): Promise<void> => {
   // SameSite=Lax is crucial for survival across cross-site redirects
   res.cookie("aff_token", token, {
     maxAge: 86400000, // 24 hours
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    secure: true,
     path: "/",
     httpOnly: true, // Server-side read only for better security
   });
@@ -311,7 +312,7 @@ router.get("/checkout/v1/payment-confirmed-3561B2", async (req, res): Promise<vo
           : errorMsg
         }</p>
         <a href="${SELLENDA_URL}" class="btn">Return to Store</a>
-        <a href="/" class="secondary-link">Go to Home Page</a>
+        <a href="${APP_URL}" class="secondary-link">Go to Home Page</a>
       </div>
       <script>
         // If inside an iframe, notify parent

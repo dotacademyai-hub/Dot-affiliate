@@ -1,11 +1,5 @@
 {
   "version": 2,
-  "framework": null,
-  "functions": {
-    "api/*.mjs": {
-      "includeFiles": "api/**"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",

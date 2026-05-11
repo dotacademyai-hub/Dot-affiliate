@@ -1,16 +1,19 @@
 {
   "version": 2,
   "framework": null,
-  "outputDirectory": "dist",
   "functions": {
-    "api/vercel.mjs": {
-      "includeFiles": "dist/api/**"
+    "api/*.mjs": {
+      "includeFiles": "api/**"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/vercel.mjs"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/dist/$1"
     }
   ]
 }

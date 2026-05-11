@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "pnpm run typecheck && pnpm -r --filter !@workspace/mockup-sandbox --filter !@workspace/scripts --if-present run build && mkdir -p dist && cp -r artifacts/dot-affiliates/dist/public/* dist/ && mkdir -p dist/api && cp artifacts/api-server/dist/vercel.mjs dist/api/vercel.mjs && cp artifacts/api-server/dist/index.mjs dist/api/index.mjs && rm -rf artifacts/api-server/src lib/api-zod/src lib/db/src lib/api-client-react/src",
+    "build": "pnpm run typecheck && pnpm -r --filter !@workspace/mockup-sandbox --filter !@workspace/scripts --if-present run build && mkdir -p dist && cp -r artifacts/dot-affiliates/dist/public/* dist/ && mkdir -p api && cp artifacts/api-server/dist/vercel.mjs api/vercel.mjs && cp artifacts/api-server/dist/index.mjs api/index.mjs && rm -rf artifacts/api-server/src lib/api-zod/src lib/db/src lib/api-client-react/src",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter !@workspace/mockup-sandbox --if-present run typecheck"
   },

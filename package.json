@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "pnpm run typecheck && pnpm -r --filter !@workspace/mockup-sandbox --filter !@workspace/scripts --if-present run build && mkdir -p dist && cp -r artifacts/dot-affiliates/dist/public/* dist/",
+    "build": "pnpm run typecheck && pnpm -r --filter !@workspace/mockup-sandbox --filter !@workspace/scripts --if-present run build && mkdir -p dist && cp -r artifacts/dot-affiliates/dist/public/* dist/ && mkdir -p dist/api && cp -r artifacts/api-server/dist/* dist/api/",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter !@workspace/mockup-sandbox --if-present run typecheck"
   },

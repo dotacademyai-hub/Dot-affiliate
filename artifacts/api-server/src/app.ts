@@ -31,6 +31,12 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Debug: log all requests
+app.use((req, res, next) => {
+  console.log(`[DEBUG] ${req.method} ${req.url} (path: ${req.path})`);
+  next();
+});
+
 app.use("/api", router);
 
 export default app;

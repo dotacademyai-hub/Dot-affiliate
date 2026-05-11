@@ -11,6 +11,7 @@ import app from "./app.js";
 
 // Vercel serverless handler
 export default function handler(req: IncomingMessage, res: ServerResponse) {
+  console.log(`[Vercel] ${req.method} ${req.url}`);
   // @ts-ignore - Express app works as a handler
   return app(req, res);
 }

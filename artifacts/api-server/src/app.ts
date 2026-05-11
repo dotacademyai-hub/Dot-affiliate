@@ -1,14 +1,14 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { pinoHttp } from "pino-http";
+import pinoHttp from "pino-http";
 import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
 
 const app = express();
 
 app.use(
-  pinoHttp({
+  (pinoHttp as any)({
     logger,
     serializers: {
       req(req: any) {

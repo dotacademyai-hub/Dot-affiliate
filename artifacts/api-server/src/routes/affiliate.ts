@@ -1,11 +1,11 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { eq, desc, sql } from "drizzle-orm";
-import { db, affiliatesTable, clicksTable } from "@workspace/db/src/index.js";
+import { db, affiliatesTable, clicksTable } from "@workspace/db";
 import {
   UpdateAffiliateSettingsBody,
   ChangePasswordBody,
-} from "@workspace/api-zod/src/index.js";
+} from "@workspace/api-zod";
 import { requireAffiliate } from "../middlewares/auth.js";
 
 const router = Router();
@@ -41,7 +41,7 @@ router.get("/affiliate/me", requireAffiliate, async (req, res): Promise<void> =>
     .where(eq(affiliatesTable.status, "active"))
     .orderBy(desc(affiliatesTable.conversions));
 
-  const rankIndex = ranked.findIndex((r) => r.id === affiliateId);
+  const rankIndex = ranked.findIndex((r: any) => r.id === affiliateId);
   const rank = rankIndex >= 0 ? rankIndex + 1 : null;
 
   res.json({

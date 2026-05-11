@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { eq, desc, and, gt } from "drizzle-orm";
-import { db, affiliatesTable, clicksTable, activityTable } from "@workspace/db/src/index.js";
-import { TrackAffiliateClickParams } from "@workspace/api-zod/src/index.js";
+import { db, affiliatesTable, clicksTable, activityTable } from "@workspace/db";
+import { TrackAffiliateClickParams } from "@workspace/api-zod";
 import { nanoid } from "nanoid";
 
 const router = Router();

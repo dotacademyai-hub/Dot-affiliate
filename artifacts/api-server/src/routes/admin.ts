@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq, desc, like, or, and, sql, count, gt, lt } from "drizzle-orm";
-import { db, affiliatesTable, activityTable, notificationsTable } from "@workspace/db/src/index.js";
+import { db, affiliatesTable, activityTable, notificationsTable } from "@workspace/db";
 import {
   AdminListAffiliatesQueryParams,
   AdminGetAffiliateParams,
@@ -8,7 +8,7 @@ import {
   AdminSuspendAffiliateParams,
   AdminUnsuspendAffiliateParams,
   AdminApproveAffiliateParams,
-} from "@workspace/api-zod/src/index.js";
+} from "@workspace/api-zod";
 import { requireAdmin, signAdminToken } from "../middlewares/auth.js";
 import { sendEmail } from "../lib/email.js";
 
@@ -133,7 +133,7 @@ router.get("/admin/affiliates/export", requireAdmin, async (_req, res): Promise<
     "Joined Date"
   ];
 
-  const rows = affiliates.map(a => [
+  const rows = affiliates.map((a: any) => [
     a.id,
     `"${a.name.replace(/"/g, '""')}"`,
     a.username,
@@ -148,7 +148,7 @@ router.get("/admin/affiliates/export", requireAdmin, async (_req, res): Promise<
 
   const csvContent = [
     headers.join(","),
-    ...rows.map(r => r.join(","))
+    ...rows.map((r: any) => r.join(","))
   ].join("\n");
 
   res.setHeader("Content-Type", "text/csv");
@@ -175,7 +175,7 @@ router.get("/admin/affiliates", requireAdmin, async (req, res): Promise<void> =>
     .orderBy(desc(affiliatesTable.conversions));
 
   const rankMap = new Map<number, number>();
-  ranked.forEach((a, i) => rankMap.set(a.id, i + 1));
+  ranked.forEach((a: any, i: number) => rankMap.set(a.id, i + 1));
 
   const conditions = [];
   if (status) conditions.push(eq(affiliatesTable.status, status as "pending" | "active" | "suspended"));
@@ -193,7 +193,7 @@ router.get("/admin/affiliates", requireAdmin, async (req, res): Promise<void> =>
     .limit(limit)
     .offset(offset);
 
-  const data = affiliates.map((a) => ({
+  const data = affiliates.map((a: any) => ({
     ...safeAffiliate(a),
     rank: rankMap.get(a.id) ?? null,
   }));
@@ -210,7 +210,7 @@ router.get("/admin/affiliates/:id", requireAdmin, async (req, res): Promise<void
 
   const ranked = await db.select({ id: affiliatesTable.id }).from(affiliatesTable).where(eq(affiliatesTable.status, "active")).orderBy(desc(affiliatesTable.conversions));
   const rankMap = new Map<number, number>();
-  ranked.forEach((a, i) => rankMap.set(a.id, i + 1));
+  ranked.forEach((a: any, i: number) => rankMap.set(a.id, i + 1));
 
   const [affiliate] = await db.select().from(affiliatesTable).where(eq(affiliatesTable.id, params.data.id)).limit(1);
   if (!affiliate) { res.status(404).json({ error: "Affiliate not found" }); return; }
@@ -388,7 +388,7 @@ router.get("/admin/top-performers", requireAdmin, async (_req, res): Promise<voi
     .orderBy(desc(affiliatesTable.conversions))
     .limit(10);
 
-  const data = affiliates.map((a, i) => ({ ...safeAffiliate(a), rank: i + 1 }));
+  const data = affiliates.map((a: any, i: number) => ({ ...safeAffiliate(a), rank: i + 1 }));
   res.json(data);
 });
 
@@ -408,7 +408,7 @@ router.get("/admin/notifications", requireAdmin, async (_req, res): Promise<void
     .orderBy(desc(notificationsTable.createdAt))
     .limit(50);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const unreadCount = notifications.filter((n: any) => !n.isRead).length;
   res.json({ notifications, unreadCount });
 });
 

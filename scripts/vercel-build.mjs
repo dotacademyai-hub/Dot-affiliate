@@ -30,19 +30,11 @@ async function build() {
   await cp(path.join(apiServerDist, 'index.mjs'), path.join(apiDir, 'index.mjs'));
   console.log(`Copied API files to api/`);
 
-  // Clean up source files to prevent Vercel typecheck issues
-  const dirsToRemove = [
-    path.join(rootDir, 'artifacts', 'api-server', 'src'),
-    path.join(rootDir, 'lib', 'api-zod', 'src'),
-    path.join(rootDir, 'lib', 'db', 'src'),
-    path.join(rootDir, 'lib', 'api-client-react', 'src'),
-  ];
-
-  for (const dir of dirsToRemove) {
-    if (existsSync(dir)) {
-      await rm(dir, { recursive: true, force: true });
-      console.log(`Removed ${dir}`);
-    }
+  // Only clean up api-server src (not lib src - frontend needs them)
+  const apiServerSrc = path.join(rootDir, 'artifacts', 'api-server', 'src');
+  if (existsSync(apiServerSrc)) {
+    await rm(apiServerSrc, { recursive: true, force: true });
+    console.log(`Removed ${apiServerSrc}`);
   }
 
   console.log('Build complete!');

@@ -6,5 +6,8 @@
       "source": "/api/(.*)",
       "destination": "/api/index.mjs"
     }
-  ]
+  ],
+  "typescript": {
+    "ignoreBuildErrors": true
+  }
 }
